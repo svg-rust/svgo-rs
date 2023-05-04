@@ -1,6 +1,8 @@
+// cleanups attributes from newlines, trailing and repeating spaces
+
 use swc_xml::{
     ast::*,
-    visit::VisitMut,
+    visit::{VisitMut, VisitMutWith},
 };
 use regex::{Regex, Captures};
 
@@ -22,6 +24,8 @@ impl Default for Visitor {
 
 impl VisitMut for Visitor {
     fn visit_mut_element(&mut self, n: &mut Element) {
+        n.visit_mut_children_with(self);
+
         for attr in n.attributes.iter_mut() {
             if attr.value.is_none() {
                 break;
@@ -80,7 +84,7 @@ mod tests {
             &mut errors
         ).unwrap();
 
-        let mut v = Visitor::default();
+        let mut v: Visitor = Default::default();
         document.visit_mut_with(&mut v);
 
         let mut xml_str = String::new();
@@ -102,6 +106,40 @@ b">
 </svg>"#,
             r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b" attr2="a b">
     test
+</svg>"#,
+        );
+    }
+
+// TODO: swc xml parser has bug for print excaped charactor.
+
+//     #[test]
+//     fn test_2() {
+//         code_test(
+//             r#"<svg xmlns="  http://www.w3.org/2000/svg
+// " attr="a      b">
+//     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
+// </svg>"#,
+//             r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b">
+//     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
+// </svg>"#,
+//         );
+//     }
+
+    #[test]
+    fn test_3() {
+        code_test(
+            r#"<svg xmlns="  http://www.w3.org/2000/svg
+" attr="a      b" attr2="a
+b">
+    <foo attr="a      b" attr2="a
+    b">
+        test
+    </foo>
+</svg>"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b" attr2="a b">
+    <foo attr="a b" attr2="a b">
+        test
+    </foo>
 </svg>"#,
         );
     }

@@ -163,4 +163,68 @@ mod tests {
 </svg>"#,
         );
     }
+
+    #[test]
+    fn test_2() {
+        code_test(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" enable-background="new 0 0 100 50">
+    <defs>
+        <filter id="ShiftBGAndBlur">
+            <feOffset dx="0" dy="75" />
+        </filter>
+    </defs>
+    test
+</svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" enable-background="new 0 0 100 50">
+    <defs>
+        <filter id="ShiftBGAndBlur">
+            <feOffset dx="0" dy="75" />
+        </filter>
+    </defs>
+    test
+</svg>"#,
+        );
+    }
+
+    #[test]
+    fn test_3() {
+        code_test(
+            r#"<svg xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="ShiftBGAndBlur">
+            <feOffset dx="0" dy="75" />
+        </filter>
+    </defs>
+    <mask width="100" height="50" enable-background="new 0 0 100 50">
+        test
+    </mask>
+</svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="ShiftBGAndBlur">
+            <feOffset dx="0" dy="75" />
+        </filter>
+    </defs>
+    <mask width="100" height="50" enable-background="new">
+        test
+    </mask>
+</svg>"#,
+        );
+    }
+
+    #[test]
+    fn test_4() {
+        code_test(
+            r#"<svg xmlns="http://www.w3.org/2000/svg">
+    <mask width="100" height="50" enable-background="new 0 0 100 50">
+        test
+    </mask>
+</svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg">
+    <mask width="100" height="50">
+        test
+    </mask>
+</svg>"#,
+        );
+    }
 }

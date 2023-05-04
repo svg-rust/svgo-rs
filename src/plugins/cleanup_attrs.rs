@@ -6,7 +6,7 @@ use swc_xml::{
 };
 use regex::{Regex, Captures};
 
-pub struct Visitor {
+struct Visitor {
     newlines: bool,
     trim: bool,
     spaces: bool,
@@ -57,6 +57,11 @@ impl VisitMut for Visitor {
     }
 }
 
+pub fn apply(_: &Document) -> Box<dyn VisitMut> {
+    let v: Visitor = Default::default();
+    Box::new(v)
+}
+
 #[cfg(test)]
 mod tests {
     use std::{sync::Arc, borrow::Borrow};
@@ -78,20 +83,20 @@ mod tests {
         let fm = cm.new_source_file(FileName::Anon, input.to_string());
 
         let mut errors = vec![];
-        let mut document = parse_file_as_document(
+        let mut doc = parse_file_as_document(
             fm.borrow(),
             parser::ParserConfig::default(),
             &mut errors
         ).unwrap();
 
-        let mut v: Visitor = Default::default();
-        document.visit_mut_with(&mut v);
+        let mut v = apply(&doc);
+        doc.visit_mut_with(&mut v);
 
         let mut xml_str = String::new();
         let wr = BasicXmlWriter::new(&mut xml_str, None, BasicXmlWriterConfig::default());
         let mut gen = CodeGenerator::new(wr, CodegenConfig::default());
 
-        gen.emit(&document).unwrap();
+        gen.emit(&doc).unwrap();
 
         assert_eq!(xml_str, expected);
     }

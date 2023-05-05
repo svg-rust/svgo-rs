@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "main": "index.js",
   "types": "index.d.ts",
+  "description": "inherit SVGO, rewritten in Rust, tool for optimizing SVG vector graphics files",
   "napi": {
     "name": "svgo-rs",
     "triples": {
@@ -15,16 +16,18 @@
       ]
     }
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.15.2",
-    "ava": "^5.1.1"
+    "@types/node": "^20.0.0",
+    "ava": "^5.1.1",
+    "typescript": "^5.0.4"
   },
   "ava": {
     "timeout": "3m"
-  },
-  "engines": {
-    "node": ">= 10"
   },
   "scripts": {
     "artifacts": "napi artifacts",
@@ -35,5 +38,9 @@
     "universal": "napi universal",
     "version": "napi version"
   },
-  "packageManager": "yarn@3.5.1"
+  "packageManager": "yarn@3.5.1",
+  "dependencies": {
+    "commander": "^10.0.1",
+    "picocolors": "^1.0.0"
+  }
 }

@@ -1,15 +1,15 @@
 {
-  "name": "@svgo-rs/darwin-arm64",
+  "name": "@svgo-rs/linux-x64-gnu",
   "version": "0.0.0",
   "os": [
-    "darwin"
+    "win32"
   ],
   "cpu": [
-    "arm64"
+    "x64"
   ],
-  "main": "svgo-rs.darwin-arm64.node",
+  "main": "svgo-rs.win32-x64-msvc.node",
   "files": [
-    "svgo-rs.darwin-arm64.node"
+    "svgo-rs.win32-x64-msvc.node"
   ],
   "license": "MIT",
   "engines": {

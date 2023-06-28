@@ -1,5 +1,5 @@
 {
-  "name": "svgo-rs-linux-x64-gnu",
+  "name": "@svgo-rs/linux-x64-gnu",
   "version": "0.0.0",
   "os": [
     "win32"

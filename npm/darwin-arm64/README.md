@@ -1,3 +1,3 @@
-# `svgo-rs-darwin-arm64`
+# `@svgo-rs/darwin-arm64`
 
 This is the **aarch64-apple-darwin** binary for `svgo-rs`

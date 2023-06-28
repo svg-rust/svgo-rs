@@ -1,5 +1,5 @@
 {
-  "name": "svgo-rs",
+  "name": "@svgo-rs/core",
   "version": "0.0.0",
   "main": "index.js",
   "types": "index.d.ts",
@@ -36,5 +36,14 @@
     "universal": "napi universal",
     "version": "napi version"
   },
-  "packageManager": "yarn@3.5.1"
+  "packageManager": "yarn@3.5.1",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "binding.js",
+    "binding.d.ts",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ]
 }

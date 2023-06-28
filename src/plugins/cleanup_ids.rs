@@ -298,7 +298,7 @@ pub fn apply(doc: &mut Document, params: &Params) {
                             // replace id in begin attribute
                             let attr = element.attributes.iter_mut().find(|attr| attr.name.to_string() == *name);
                             if let Some(attr) = attr {
-                                attr.value = Some(value.replace(&format!("{}.{}", id, "."), &format!("{}.{}", current_id_string, ".")).into());
+                                attr.value = Some(value.replace(&format!("{}.", id), &format!("{}.", current_id_string)).into());
                             }
                         }
                     }

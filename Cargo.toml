@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 napi = { version = "2.12.0", default-features = false, features = ["napi4"] }
 napi-derive = "2.12.2"
 regex = "1.8.1"
-swc_core = { version = "0.74.2", features = [
+swc_core = { version = "0.78.28", features = [
   "ecma_ast",
   "ecma_ast_serde",
   "common_concurrent",
@@ -22,7 +22,7 @@ swc_core = { version = "0.74.2", features = [
   "base_node",
   "__parser",
 ] }
-swc_xml = "0.10.3"
+swc_xml = "0.11.21"
 linked-hash-map = "0.5.6"
 
 [build-dependencies]
@@ -30,6 +30,7 @@ napi-build = "2.0.1"
 
 [dev-dependencies]
 pretty_assertions = "1.3.0"
+testing = "0.32.5"
 
 [profile.release]
 lto = true

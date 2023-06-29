@@ -64,8 +64,6 @@ pub fn apply(_: &Document) -> Box<dyn VisitMut> {
 
 #[cfg(test)]
 mod tests {
-    use std::{sync::Arc, borrow::Borrow};
-
     use swc_core::common::{SourceMap, FileName};
     use swc_xml::{
         parser::{parse_file_as_document, parser},
@@ -76,15 +74,18 @@ mod tests {
         visit::VisitMutWith,
     };
 
+    #[cfg(test)]
+    use pretty_assertions::assert_eq;
+
     use super::*;
 
     fn code_test(input: &str, expected: &str) {
-        let cm = Arc::<SourceMap>::default();
+        let cm = SourceMap::default();
         let fm = cm.new_source_file(FileName::Anon, input.to_string());
 
         let mut errors = vec![];
         let mut doc = parse_file_as_document(
-            fm.borrow(),
+            &fm,
             parser::ParserConfig::default(),
             &mut errors
         ).unwrap();
@@ -115,20 +116,18 @@ b">
         );
     }
 
-// TODO: swc xml parser has bug for print excaped charactor.
-
-//     #[test]
-//     fn test_2() {
-//         code_test(
-//             r#"<svg xmlns="  http://www.w3.org/2000/svg
-// " attr="a      b">
-//     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
-// </svg>"#,
-//             r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b">
-//     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
-// </svg>"#,
-//         );
-//     }
+    #[test]
+    fn test_2() {
+        code_test(
+            r#"<svg xmlns="  http://www.w3.org/2000/svg
+" attr="a      b">
+    test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
+</svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b">
+    test &amp; &lt;&amp; &gt; ' " &amp;
+</svg>"#,
+        );
+    }
 
     #[test]
     fn test_3() {

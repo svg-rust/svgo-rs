@@ -32,4 +32,4 @@
 
 @@@
 
-{"force": true, "preserve": "figure"}
+{"force": true, "preserve": ["figure"]}

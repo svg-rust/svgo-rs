@@ -9,6 +9,7 @@ use swc_xml::{
 };
 use regex::Regex;
 use linked_hash_map::LinkedHashMap;
+use serde::Deserialize;
 
 use super::collections;
 
@@ -24,9 +25,9 @@ struct EnterVisitor<'a> {
 }
 
 impl EnterVisitor<'_> {
-    fn new() -> Self {
+    fn new(force: bool) -> Self {
         Self {
-            force: false,
+            force,
 
             references_props: collections::get_references_props(),
             deoptimized: false,
@@ -197,12 +198,26 @@ fn get_generate_id_chars() -> Vec<String> {
     ].iter().map(|s| s.to_string()).collect()
 }
 
+#[derive(Debug, Deserialize)]
 pub struct Params {
+    #[serde(default = "default_remove")]
     pub remove: bool,
+    #[serde(default = "default_minify")]
     pub minify: bool,
+    #[serde(default)]
     pub preserve: Vec<String>,
+    #[serde(default)]
     pub preserve_prefixes: Vec<String>,
+    #[serde(default)]
     pub force: bool,
+}
+
+fn default_remove() -> bool {
+    true
+}
+
+fn default_minify() -> bool {
+    true
 }
 
 impl Default for Params {
@@ -218,13 +233,6 @@ impl Default for Params {
 }
 
 pub fn apply(doc: &mut Document, params: &Params) {
-    let mut v = EnterVisitor::new();
-    doc.visit_mut_with(&mut v);
-
-    if v.deoptimized {
-        return;
-    }
-
     let Params {
         remove,
         minify,
@@ -232,6 +240,13 @@ pub fn apply(doc: &mut Document, params: &Params) {
         preserve_prefixes,
         force
     } = params;
+
+    let mut v = EnterVisitor::new(*force);
+    doc.visit_mut_with(&mut v);
+
+    if v.deoptimized {
+        return;
+    }
 
     let preserve_ids: HashSet<String> = preserve.iter().map(|x| x.clone()).collect();
 
@@ -338,7 +353,7 @@ mod tests {
 
     use super::*;
 
-    fn code_test(input: &str, expected: &str) {
+    fn code_test(input: &str, expected: &str, params: &Params) {
         let cm = Arc::<SourceMap>::default();
         let fm = cm.new_source_file(FileName::Anon, input.to_string());
 
@@ -349,7 +364,7 @@ mod tests {
             &mut errors
         ).unwrap();
 
-        apply(&mut doc, &Default::default());
+        apply(&mut doc, &params);
 
         let mut xml_str = String::new();
         let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
@@ -369,9 +384,17 @@ mod tests {
         let text = fs::read_to_string(input).unwrap();
         let re = Regex::new(r"\s*@@@\s*").unwrap();
         let fields: Vec<&str> = re.split(&text).collect();
+
         let input = fields[0].trim();
         let expected = fields[1].trim();
-        code_test(input, expected);
+        let params: Params = if fields.len() > 2 {
+            let json_str = fields[2].trim();
+            serde_json::from_str(json_str).unwrap()
+        } else {
+            Default::default()
+        };
+
+        code_test(input, expected, &params);
     }
 
     #[testing::fixture("__fixture__/plugins/cleanupIds*.svg")]

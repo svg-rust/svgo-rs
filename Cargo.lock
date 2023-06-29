@@ -1626,6 +1626,8 @@ dependencies = [
  "napi-derive",
  "pretty_assertions",
  "regex",
+ "serde",
+ "serde_json",
  "swc_core",
  "swc_xml",
  "testing",

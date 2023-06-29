@@ -238,7 +238,7 @@ pub fn apply(doc: &mut Document, params: &Params) {
     let is_id_preserved = |id: &String| preserve_ids.get(id).is_some() || has_string_prefix(id, preserve_prefixes);
 
     let generate_id_chars = get_generate_id_chars();
-    let max_id_index: usize = generate_id_chars.len();
+    let max_id_index: usize = generate_id_chars.len() - 1;
 
     // Generate unique minimal ID.
     let generate_id = |current_id: &mut Vec<usize>| {
@@ -325,15 +325,12 @@ pub fn apply(doc: &mut Document, params: &Params) {
 
 #[cfg(test)]
 mod tests {
-    use std::{sync::Arc, borrow::Borrow};
+    use std::{sync::Arc, borrow::Borrow, path::PathBuf, fs};
 
     use swc_core::common::{SourceMap, FileName};
     use swc_xml::{
         parser::{parse_file_as_document, parser},
-        codegen::{
-            writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
-            CodeGenerator, CodegenConfig, Emit,
-        },
+        codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit},
     };
 
     #[cfg(test)]
@@ -355,75 +352,30 @@ mod tests {
         apply(&mut doc, &Default::default());
 
         let mut xml_str = String::new();
-        let wr = BasicXmlWriter::new(&mut xml_str, None, BasicXmlWriterConfig::default());
-        let mut gen = CodeGenerator::new(wr, CodegenConfig::default());
+        let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
+        let gen_conf = CodegenConfig {
+            minify: true,
+            scripting_enabled: false,
+            ..Default::default()
+        };
+        let mut gen = CodeGenerator::new(wr, gen_conf);
 
         gen.emit(&doc).unwrap();
 
         assert_eq!(xml_str, expected);
     }
 
-    #[test]
-    fn test_1() {
-        code_test(
-            r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <defs>
-        <linearGradient id="gradient001">
-            <stop offset="5%" stop-color="#F60" />
-            <stop offset="95%" stop-color="#FF6" />
-        </linearGradient>
-        <text id="referencedText">
-            referenced text
-        </text>
-        <path id="crochet" d="..." />
-        <path id="block" d="..." />
-        <path id="two" d="..." />
-        <path id="two" d="..." />
-    </defs>
-    <g id="g001">
-        <circle id="circle001" fill="url(#gradient001)" cx="60" cy="60" r="50" />
-        <rect fill="url('#gradient001')" x="0" y="0" width="500" height="100" />
-        <tref xlink:href="#referencedText" />
-    </g>
-    <g>
-        <tref xlink:href="#referencedText" />
-    </g>
-    <animateMotion xlink:href="#crochet" dur="0.5s" begin="block.mouseover" fill="freeze" path="m 0,0 0,-21" />
-    <use xlink:href="#two" />
-</svg>"#,
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="100.5" height=".5">
-    <defs>
-        <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
-        </filter>
-    </defs>
-    test
-</svg>"##,
-            r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <defs>
-        <linearGradient id="a">
-            <stop offset="5%" stop-color="#F60" />
-            <stop offset="95%" stop-color="#FF6" />
-        </linearGradient>
-        <text id="b">
-            referenced text
-        </text>
-        <path id="c" d="..." />
-        <path id="d" d="..." />
-        <path id="e" d="..." />
-        <path d="..." />
-    </defs>
-    <g>
-        <circle fill="url(#a)" cx="60" cy="60" r="50" />
-        <rect fill="url('#a')" x="0" y="0" width="500" height="100" />
-        <tref xlink:href="#b" />
-    </g>
-    <g>
-        <tref xlink:href="#b" />
-    </g>
-    <animateMotion xlink:href="#c" dur="0.5s" begin="d.mouseover" fill="freeze" path="m 0,0 0,-21" />
-    <use xlink:href="#e" />
-</svg>"##,
-        );
+    fn document_test(input: PathBuf) {
+        let text = fs::read_to_string(input).unwrap();
+        let re = Regex::new(r"\s*@@@\s*").unwrap();
+        let fields: Vec<&str> = re.split(&text).collect();
+        let input = fields[0].trim();
+        let expected = fields[1].trim();
+        code_test(input, expected);
+    }
+
+    #[testing::fixture("__fixture__/plugins/cleanupIds*.svg")]
+    fn pass(input: PathBuf) {
+        document_test(input);
     }
 }

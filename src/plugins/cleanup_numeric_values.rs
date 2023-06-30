@@ -35,27 +35,22 @@ fn round_value(value: &str, float_precision: i32) -> String {
     }
 }
 
-fn convert_to_px(value: &str, unit: &str, float_precision: i32) -> String {
-    let absolute_lengths = get_absolute_lengths();
-    let len = absolute_lengths.get(unit);
-    if let Some(len) = len {
-        let px_num = round(len * value.parse::<f64>().unwrap_or(0.0), float_precision);
-        if px_num.to_string().len() < value.len() {
-            px_num.to_string() + "px"
-        } else {
-            value.to_string()
-        }
-    } else {
-        value.to_string()
-    }
-}
+/// Remove floating-point numbers leading zero.
+/// 
+/// # Examples
+/// 0.5 → .5
+///
+/// -0.5 → -.5
+fn remove_leading_zero(num: f64) -> String {
+    let mut str_num = num.to_string();
 
-fn remove_leading_zero(value: &str) -> String {
-    if value.starts_with("0") && !value.starts_with("0.") {
-        value[1..].to_string()
-    } else {
-        value.to_string()
+    if 0.0 < num && num < 1.0 && str_num.chars().next() == Some('0') {
+        str_num = str_num[1..].to_string();
+    } else if -1.0 < num && num < 0.0 && str_num.chars().nth(1) == Some('0') {
+        str_num = str_num.chars().take(1).chain(str_num.chars().skip(2)).collect();
     }
+
+    str_num
 }
 
 struct Visitor {
@@ -113,7 +108,7 @@ impl VisitMut for Visitor {
             }
         }
 
-        let reg_numeric_values = Regex::new(r"^([-+]?\d*\.?\d+([eE][-+]?\d+)?)(px|pt|pc|mm|cm|m|in|ft|em|ex|%)?$").unwrap();
+        let reg_numeric_values = Regex::new(r#"^([-+]?\d*\.?\d+([eE][-+]?\d+)?)(px|pt|pc|mm|cm|m|in|ft|em|ex|%)?$"#).unwrap();
         for attr in n.attributes.iter_mut() {
             // The `version` attribute is a text string and cannot be rounded
             if attr.name.to_string() == "version" {
@@ -123,21 +118,38 @@ impl VisitMut for Visitor {
             if let Some(value) = attr.value.clone() {
                 if let Some(captures) = reg_numeric_values.captures(&value.to_string()) {
                     let num_str = captures.get(1).map_or("", |m| m.as_str());
-                    let unit = captures.get(2).map_or("", |m| m.as_str());
+                    let unit = captures.get(3).map_or("", |m| m.as_str());
 
-                    let mut v = if self.convert_to_px {
-                        convert_to_px(num_str, unit, self.float_precision).into()
+                    // round it to the fixed precision
+                    let mut num = round(num_str.parse::<f64>().unwrap_or(0.0), self.float_precision);
+                    let mut units = unit;
+
+                    // convert absolute values to pixels
+                    if self.convert_to_px {
+                        let absolute_lengths = get_absolute_lengths();
+                        let len = absolute_lengths.get(unit);
+                        if let Some(len) = len {
+                            let px_num = round(len * num_str.parse::<f64>().unwrap_or(0.0), self.float_precision);
+                            if px_num.to_string().len() < value.len() {
+                                num = px_num;
+                                units = "px";
+                            }
+                        }
+                    }
+
+                    // and remove leading zero
+                    let str = if self.leading_zero {
+                        remove_leading_zero(num)
                     } else {
-                        round_value(num_str, self.float_precision).into()
+                        num.to_string()
                     };
-                    if self.leading_zero {
-                        v = remove_leading_zero(&value).into();
-                    }
-                    if self.default_px && unit == "px" {
-                        v = num_str.into();
+
+                    // remove default 'px' units
+                    if self.default_px && units == "px" {
+                        units = "";
                     }
 
-                    attr.value = Some(v);
+                    attr.value = Some(format!("{}{}", str, units).into());
                 }
             }
         }

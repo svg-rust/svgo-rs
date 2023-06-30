@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate napi_derive;
 
-use std::{sync::Arc, borrow::Borrow};
+use std::sync::Arc;
 
 use swc_xml::{parser::{parse_file_as_document, parser}};
 use swc_core::common::{SourceMap, FileName};
@@ -27,7 +27,7 @@ pub fn optimize(input: String, config: Option<Config>) -> Output {
 
     let mut errors = vec![];
     let document = parse_file_as_document(
-        fm.borrow(),
+        &fm,
         parser::ParserConfig::default(),
         &mut errors
     ).unwrap();

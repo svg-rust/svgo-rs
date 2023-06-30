@@ -9,6 +9,7 @@ use swc_xml::{
 };
 use regex::Regex;
 use linked_hash_map::LinkedHashMap;
+use serde::Deserialize;
 
 use super::collections;
 
@@ -24,9 +25,9 @@ struct EnterVisitor<'a> {
 }
 
 impl EnterVisitor<'_> {
-    fn new() -> Self {
+    fn new(force: bool) -> Self {
         Self {
-            force: false,
+            force,
 
             references_props: collections::get_references_props(),
             deoptimized: false,
@@ -38,13 +39,13 @@ impl EnterVisitor<'_> {
 
 impl VisitMut for EnterVisitor<'_> {
     fn visit_mut_element(&mut self, n: &mut Element) {
-        n.visit_mut_children_with(self);
-
         let tag_name = n.tag_name.to_string();
 
         if self.force == false {
             if (tag_name == "style" ||tag_name == "script") && n.children.len() != 0 {
                 self.deoptimized = true;
+
+                n.visit_mut_children_with(self);        
                 return
             }
 
@@ -53,6 +54,7 @@ impl VisitMut for EnterVisitor<'_> {
                 let has_defs_only = !n.children.iter().any(|child| {
                     match child {
                         Child::Element(child) => child.tag_name.to_string() != "defs",
+                        Child::Text(child) => child.data.to_string().trim() != "",
                         _ => true,
                     }
                 });
@@ -127,6 +129,8 @@ impl VisitMut for EnterVisitor<'_> {
                 }
             }
         }
+
+        n.visit_mut_children_with(self);
     }
 }
 
@@ -197,12 +201,26 @@ fn get_generate_id_chars() -> Vec<String> {
     ].iter().map(|s| s.to_string()).collect()
 }
 
+#[derive(Debug, Deserialize)]
 pub struct Params {
+    #[serde(default = "default_remove")]
     pub remove: bool,
+    #[serde(default = "default_minify")]
     pub minify: bool,
+    #[serde(default)]
     pub preserve: Vec<String>,
+    #[serde(default, rename = "preservePrefixes")]
     pub preserve_prefixes: Vec<String>,
+    #[serde(default)]
     pub force: bool,
+}
+
+fn default_remove() -> bool {
+    true
+}
+
+fn default_minify() -> bool {
+    true
 }
 
 impl Default for Params {
@@ -218,13 +236,6 @@ impl Default for Params {
 }
 
 pub fn apply(doc: &mut Document, params: &Params) {
-    let mut v = EnterVisitor::new();
-    doc.visit_mut_with(&mut v);
-
-    if v.deoptimized {
-        return;
-    }
-
     let Params {
         remove,
         minify,
@@ -233,12 +244,19 @@ pub fn apply(doc: &mut Document, params: &Params) {
         force
     } = params;
 
+    let mut v = EnterVisitor::new(*force);
+    doc.visit_mut_with(&mut v);
+
+    if v.deoptimized {
+        return;
+    }
+
     let preserve_ids: HashSet<String> = preserve.iter().map(|x| x.clone()).collect();
 
     let is_id_preserved = |id: &String| preserve_ids.get(id).is_some() || has_string_prefix(id, preserve_prefixes);
 
     let generate_id_chars = get_generate_id_chars();
-    let max_id_index: usize = generate_id_chars.len();
+    let max_id_index: usize = generate_id_chars.len() - 1;
 
     // Generate unique minimal ID.
     let generate_id = |current_id: &mut Vec<usize>| {
@@ -325,15 +343,12 @@ pub fn apply(doc: &mut Document, params: &Params) {
 
 #[cfg(test)]
 mod tests {
-    use std::{sync::Arc, borrow::Borrow};
+    use std::{sync::Arc, borrow::Borrow, path::PathBuf, fs};
 
     use swc_core::common::{SourceMap, FileName};
     use swc_xml::{
         parser::{parse_file_as_document, parser},
-        codegen::{
-            writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
-            CodeGenerator, CodegenConfig, Emit,
-        },
+        codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit},
     };
 
     #[cfg(test)]
@@ -341,7 +356,7 @@ mod tests {
 
     use super::*;
 
-    fn code_test(input: &str, expected: &str) {
+    fn code_test(input: &str, expected: &str, params: &Params) {
         let cm = Arc::<SourceMap>::default();
         let fm = cm.new_source_file(FileName::Anon, input.to_string());
 
@@ -352,78 +367,41 @@ mod tests {
             &mut errors
         ).unwrap();
 
-        apply(&mut doc, &Default::default());
+        apply(&mut doc, &params);
 
         let mut xml_str = String::new();
-        let wr = BasicXmlWriter::new(&mut xml_str, None, BasicXmlWriterConfig::default());
-        let mut gen = CodeGenerator::new(wr, CodegenConfig::default());
+        let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
+        let gen_conf = CodegenConfig {
+            minify: true,
+            scripting_enabled: false,
+            ..Default::default()
+        };
+        let mut gen = CodeGenerator::new(wr, gen_conf);
 
         gen.emit(&doc).unwrap();
 
         assert_eq!(xml_str, expected);
     }
 
-    #[test]
-    fn test_1() {
-        code_test(
-            r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <defs>
-        <linearGradient id="gradient001">
-            <stop offset="5%" stop-color="#F60" />
-            <stop offset="95%" stop-color="#FF6" />
-        </linearGradient>
-        <text id="referencedText">
-            referenced text
-        </text>
-        <path id="crochet" d="..." />
-        <path id="block" d="..." />
-        <path id="two" d="..." />
-        <path id="two" d="..." />
-    </defs>
-    <g id="g001">
-        <circle id="circle001" fill="url(#gradient001)" cx="60" cy="60" r="50" />
-        <rect fill="url('#gradient001')" x="0" y="0" width="500" height="100" />
-        <tref xlink:href="#referencedText" />
-    </g>
-    <g>
-        <tref xlink:href="#referencedText" />
-    </g>
-    <animateMotion xlink:href="#crochet" dur="0.5s" begin="block.mouseover" fill="freeze" path="m 0,0 0,-21" />
-    <use xlink:href="#two" />
-</svg>"#,
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="100.5" height=".5">
-    <defs>
-        <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
-        </filter>
-    </defs>
-    test
-</svg>"##,
-            r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <defs>
-        <linearGradient id="a">
-            <stop offset="5%" stop-color="#F60" />
-            <stop offset="95%" stop-color="#FF6" />
-        </linearGradient>
-        <text id="b">
-            referenced text
-        </text>
-        <path id="c" d="..." />
-        <path id="d" d="..." />
-        <path id="e" d="..." />
-        <path d="..." />
-    </defs>
-    <g>
-        <circle fill="url(#a)" cx="60" cy="60" r="50" />
-        <rect fill="url('#a')" x="0" y="0" width="500" height="100" />
-        <tref xlink:href="#b" />
-    </g>
-    <g>
-        <tref xlink:href="#b" />
-    </g>
-    <animateMotion xlink:href="#c" dur="0.5s" begin="d.mouseover" fill="freeze" path="m 0,0 0,-21" />
-    <use xlink:href="#e" />
-</svg>"##,
-        );
+    fn document_test(input: PathBuf) {
+        let text = fs::read_to_string(input).unwrap();
+        let re = Regex::new(r"\s*@@@\s*").unwrap();
+        let fields: Vec<&str> = re.split(&text).collect();
+
+        let input = fields[0].trim();
+        let expected = fields[1].trim();
+        let params: Params = if fields.len() > 2 {
+            let json_str = fields[2].trim();
+            serde_json::from_str(json_str).unwrap()
+        } else {
+            Default::default()
+        };
+
+        code_test(input, expected, &params);
+    }
+
+    #[testing::fixture("__fixture__/plugins/cleanupIds*.svg")]
+    fn pass(input: PathBuf) {
+        document_test(input);
     }
 }

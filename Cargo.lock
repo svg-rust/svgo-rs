@@ -169,6 +169,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bindings"
+version = "0.0.0"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "svgo-rs",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1654,7 +1664,6 @@ version = "0.0.0"
 dependencies = [
  "linked-hash-map",
  "napi",
- "napi-build",
  "napi-derive",
  "pretty_assertions",
  "regex",

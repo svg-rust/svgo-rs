@@ -13,13 +13,18 @@ use swc_core::common::{SourceMap, FileName};
 
 mod plugins;
 
+#[cfg(feature = "node")]
 #[napi(object)]
 pub struct Output {
     pub data: String,
 }
 
+#[cfg(not(feature = "node"))]
+pub struct Output {
+    pub data: String,
+}
+
 /// The core of SVGO
-#[napi]
 pub fn optimize(input: String) -> Output {
     let cm = Arc::<SourceMap>::default();
     let fm = cm.new_source_file(FileName::Anon, input);

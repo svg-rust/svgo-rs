@@ -1,0 +1,41 @@
+[package]
+authors     = ["SyMind <dacongsama@live.com>"]
+description = "A tool for optimizing SVG vector graphics files"
+name        = "svgo-rs"
+edition     = "2021"
+license     = "MIT"
+repository  = "https://github.com/svg-rust/svgo-rs.git"
+version     = "0.0.0"
+
+[features]
+node = ["dep:napi", "dep:napi-derive"]
+
+[dependencies]
+# Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
+napi = { version = "2.12.0", default-features = false, features = ["napi4"], optional = true }
+napi-derive = { version = "2.12.2", optional = true }
+
+regex = "1.8.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+swc_core = { version = "0.78.28", features = [
+  "ecma_ast",
+  "ecma_ast_serde",
+  "common_concurrent",
+  "bundler",
+  "ecma_loader",
+  "ecma_transforms",
+  "ecma_visit",
+  "ecma_codegen",
+  "base_node",
+  "__parser",
+] }
+swc_xml = "0.11.21"
+linked-hash-map = "0.5.6"
+
+[dev-dependencies]
+pretty_assertions = "1.3.0"
+testing = "0.33.19"
+
+[profile.release]
+lto = true

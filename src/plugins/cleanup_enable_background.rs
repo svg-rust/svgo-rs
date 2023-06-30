@@ -1,11 +1,11 @@
-/// remove or cleanup enable-background attribute when possible
-///
-/// @see https://www.w3.org/TR/SVG11/filters.html#EnableBackgroundProperty
-/// 
-/// @example
-/// <svg width="100" height="50" enable-background="new 0 0 100 50">
-///             ⬇
-/// <svg width="100" height="50">
+// remove or cleanup enable-background attribute when possible
+//
+// @see https://www.w3.org/TR/SVG11/filters.html#EnableBackgroundProperty
+// 
+// @example
+// <svg width="100" height="50" enable-background="new 0 0 100 50">
+//             ⬇
+// <svg width="100" height="50">
 
 use swc_xml::{
     ast::*,
@@ -94,13 +94,12 @@ impl Visit for FilterVisitor {
     }
 }
 
-pub fn apply(doc: &Document) -> Box<dyn VisitMut> {
+pub fn apply(doc: &mut Document) {
     let mut filter_visitor: FilterVisitor = Default::default();
     doc.visit_with(&mut filter_visitor);
 
-    let v = Visitor::new(filter_visitor.has_filter);
-
-    Box::new(v)
+    let mut v = Visitor::new(filter_visitor.has_filter);
+    doc.visit_mut_with(&mut v);
 }
 
 #[cfg(test)]
@@ -114,7 +113,6 @@ mod tests {
             writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
             CodeGenerator, CodegenConfig, Emit,
         },
-        visit::VisitMutWith,
     };
 
     use super::*;
@@ -130,8 +128,7 @@ mod tests {
             &mut errors
         ).unwrap();
 
-        let mut v = apply(&doc);
-        doc.visit_mut_with(&mut v);
+        apply(&mut doc);
 
         let mut xml_str = String::new();
         let wr = BasicXmlWriter::new(&mut xml_str, None, BasicXmlWriterConfig::default());

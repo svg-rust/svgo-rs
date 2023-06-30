@@ -1,5 +1,5 @@
-/// Remove unused and minify used IDs
-/// (only if there are no any <style> or <script>).
+// Remove unused and minify used IDs
+// (only if there are no any <style> or <script>).
 
 use std::collections::{HashMap, HashSet};
 
@@ -25,7 +25,12 @@ struct EnterVisitor<'a> {
 }
 
 impl EnterVisitor<'_> {
-    fn new(force: bool) -> Self {
+    fn new(params: &Params) -> Self {
+        let Params {
+            force,
+            ..
+        } = *params;
+
         Self {
             force,
 
@@ -144,7 +149,7 @@ fn has_string_prefix(str: &String, prefixes: &Vec<String>) -> bool {
     false
 }
 
-fn get_generate_id_chars() -> Vec<String> {
+fn get_generate_id_chars() -> Vec<&'static str> {
     vec![
         "a",
         "b",
@@ -198,7 +203,7 @@ fn get_generate_id_chars() -> Vec<String> {
         "X",
         "Y",
         "Z",
-    ].iter().map(|s| s.to_string()).collect()
+    ]
 }
 
 #[derive(Debug, Deserialize)]
@@ -241,10 +246,10 @@ pub fn apply(doc: &mut Document, params: &Params) {
         minify,
         preserve,
         preserve_prefixes,
-        force
+        ..
     } = params;
 
-    let mut v = EnterVisitor::new(*force);
+    let mut v = EnterVisitor::new(params);
     doc.visit_mut_with(&mut v);
 
     if v.deoptimized {
@@ -283,7 +288,7 @@ pub fn apply(doc: &mut Document, params: &Params) {
     // Get string from generated ID array.
     let get_id_string = |arr: &Vec<usize>| -> String {
         arr.iter()
-            .map(|&i| generate_id_chars[i].clone())
+            .map(|&i| generate_id_chars[i].to_string())
             .collect::<String>()
     };
 

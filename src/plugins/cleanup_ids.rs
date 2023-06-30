@@ -144,7 +144,7 @@ fn has_string_prefix(str: &String, prefixes: &Vec<String>) -> bool {
     false
 }
 
-fn get_generate_id_chars() -> Vec<String> {
+fn get_generate_id_chars() -> Vec<&'static str> {
     vec![
         "a",
         "b",
@@ -198,7 +198,7 @@ fn get_generate_id_chars() -> Vec<String> {
         "X",
         "Y",
         "Z",
-    ].iter().map(|s| s.to_string()).collect()
+    ]
 }
 
 #[derive(Debug, Deserialize)]
@@ -283,7 +283,7 @@ pub fn apply(doc: &mut Document, params: &Params) {
     // Get string from generated ID array.
     let get_id_string = |arr: &Vec<usize>| -> String {
         arr.iter()
-            .map(|&i| generate_id_chars[i].clone())
+            .map(|&i| generate_id_chars[i].to_string())
             .collect::<String>()
     };
 

@@ -20,4 +20,4 @@
 
 @@@
 
-{"preservePrefixes": "a"}
+{"preservePrefixes": ["a"]}

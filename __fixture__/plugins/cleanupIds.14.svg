@@ -32,4 +32,4 @@
 
 @@@
 
-{"force": true, "preservePrefixes": "pre1_"}
+{"force": true, "preservePrefixes": ["pre1_"]}

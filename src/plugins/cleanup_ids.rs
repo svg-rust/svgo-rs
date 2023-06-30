@@ -39,13 +39,13 @@ impl EnterVisitor<'_> {
 
 impl VisitMut for EnterVisitor<'_> {
     fn visit_mut_element(&mut self, n: &mut Element) {
-        n.visit_mut_children_with(self);
-
         let tag_name = n.tag_name.to_string();
 
         if self.force == false {
             if (tag_name == "style" ||tag_name == "script") && n.children.len() != 0 {
                 self.deoptimized = true;
+
+                n.visit_mut_children_with(self);        
                 return
             }
 
@@ -54,6 +54,7 @@ impl VisitMut for EnterVisitor<'_> {
                 let has_defs_only = !n.children.iter().any(|child| {
                     match child {
                         Child::Element(child) => child.tag_name.to_string() != "defs",
+                        Child::Text(child) => child.data.to_string().trim() != "",
                         _ => true,
                     }
                 });
@@ -128,6 +129,8 @@ impl VisitMut for EnterVisitor<'_> {
                 }
             }
         }
+
+        n.visit_mut_children_with(self);
     }
 }
 
@@ -206,7 +209,7 @@ pub struct Params {
     pub minify: bool,
     #[serde(default)]
     pub preserve: Vec<String>,
-    #[serde(default)]
+    #[serde(default, rename = "preservePrefixes")]
     pub preserve_prefixes: Vec<String>,
     #[serde(default)]
     pub force: bool,

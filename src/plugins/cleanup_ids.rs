@@ -1,5 +1,5 @@
-/// Remove unused and minify used IDs
-/// (only if there are no any <style> or <script>).
+// Remove unused and minify used IDs
+// (only if there are no any <style> or <script>).
 
 use std::collections::{HashMap, HashSet};
 

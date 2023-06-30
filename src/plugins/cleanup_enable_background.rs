@@ -1,11 +1,11 @@
-/// remove or cleanup enable-background attribute when possible
-///
-/// @see https://www.w3.org/TR/SVG11/filters.html#EnableBackgroundProperty
-/// 
-/// @example
-/// <svg width="100" height="50" enable-background="new 0 0 100 50">
-///             ⬇
-/// <svg width="100" height="50">
+// remove or cleanup enable-background attribute when possible
+//
+// @see https://www.w3.org/TR/SVG11/filters.html#EnableBackgroundProperty
+// 
+// @example
+// <svg width="100" height="50" enable-background="new 0 0 100 50">
+//             ⬇
+// <svg width="100" height="50">
 
 use swc_xml::{
     ast::*,

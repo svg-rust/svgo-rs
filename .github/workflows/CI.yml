@@ -17,6 +17,18 @@ env:
       - docs/**
   pull_request: null
 jobs:
+  cargo-test:
+    name: Test cargo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly-2023-06-27
+          target: x86_64-unknown-linux-gnu
+      - name: Run cargo test
+        run: cargo test -p svgr-rs
   build:
     strategy:
       fail-fast: false
@@ -44,6 +56,8 @@ jobs:
               yarn build --target aarch64-apple-darwin
               strip -x *.node
     name: stable - ${{ matrix.settings.target }} - node@18
+    needs:
+      - cargo-test
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v3

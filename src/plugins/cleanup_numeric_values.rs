@@ -7,7 +7,7 @@ use swc_xml::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
 };
-use regex::{Regex, Captures};
+use regex::Regex;
 
 // relative to px
 fn get_absolute_lengths() -> HashMap<&'static str, f64> {
@@ -84,6 +84,7 @@ impl VisitMut for Visitor {
             if let Some(value) = view_box.value.clone() {
                 let nums: Vec<String> = value.to_string()
                     .split(|c: char| c.is_whitespace() || c == ',')
+                    .filter(|s| *s != "")
                     .map(|s| s.to_string())
                     .collect();
                 let rounded_nums: Vec<String> = nums

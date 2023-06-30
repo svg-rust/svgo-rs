@@ -57,9 +57,9 @@ impl VisitMut for Visitor {
     }
 }
 
-pub fn apply(_: &Document) -> Box<dyn VisitMut> {
-    let v: Visitor = Default::default();
-    Box::new(v)
+pub fn apply(doc: &mut Document) {
+    let mut v: Visitor = Default::default();
+    doc.visit_mut_with(&mut v);
 }
 
 #[cfg(test)]
@@ -71,7 +71,6 @@ mod tests {
             writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
             CodeGenerator, CodegenConfig, Emit,
         },
-        visit::VisitMutWith,
     };
 
     #[cfg(test)]
@@ -90,8 +89,7 @@ mod tests {
             &mut errors
         ).unwrap();
 
-        let mut v = apply(&doc);
-        doc.visit_mut_with(&mut v);
+        apply(&mut doc);
 
         let mut xml_str = String::new();
         let wr = BasicXmlWriter::new(&mut xml_str, None, BasicXmlWriterConfig::default());

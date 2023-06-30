@@ -25,7 +25,12 @@ struct EnterVisitor<'a> {
 }
 
 impl EnterVisitor<'_> {
-    fn new(force: bool) -> Self {
+    fn new(params: &Params) -> Self {
+        let Params {
+            force,
+            ..
+        } = *params;
+
         Self {
             force,
 
@@ -244,7 +249,7 @@ pub fn apply(doc: &mut Document, params: &Params) {
         force
     } = params;
 
-    let mut v = EnterVisitor::new(*force);
+    let mut v = EnterVisitor::new(params);
     doc.visit_mut_with(&mut v);
 
     if v.deoptimized {

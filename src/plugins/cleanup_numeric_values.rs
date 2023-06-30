@@ -76,6 +76,24 @@ impl Default for Visitor {
     }
 }
 
+impl Visitor {
+    fn new(params: &Params) -> Self {
+        let Params {
+            float_precision,
+            leading_zero,
+            default_px,
+            convert_to_px,
+        } = *params;
+
+        Self {
+            float_precision,
+            leading_zero,
+            default_px,
+            convert_to_px,
+        }
+    }
+}
+
 impl VisitMut for Visitor {
     fn visit_mut_element(&mut self, n: &mut Element) {
         n.visit_mut_children_with(self);
@@ -133,8 +151,19 @@ pub struct Params {
     pub convert_to_px: bool,
 }
 
-pub fn apply(doc: &mut Document) {
-    let mut v: Visitor = Default::default();
+impl Default for Params {
+    fn default() -> Self {
+        Self {
+            float_precision: 3,
+            leading_zero: true,
+            default_px: true,
+            convert_to_px: true,
+        }
+    }
+}
+
+pub fn apply(doc: &mut Document, params: &Params) {
+    let mut v: Visitor = Visitor::new(params);
     doc.visit_mut_with(&mut v);
 }
 
@@ -164,7 +193,7 @@ mod tests {
             &mut errors
         ).unwrap();
 
-        apply(&mut doc);
+        apply(&mut doc, &Default::default());
 
         let mut xml_str = String::new();
         let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());

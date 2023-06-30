@@ -10,7 +10,5 @@ export interface TransformOutput {
 export interface Output {
   data: string
 }
-export interface Config {
-  path?: string
-}
-export function optimize(input: string, config?: Config | undefined | null): Output
+/** The core of SVGO */
+export function optimize(input: string): Output

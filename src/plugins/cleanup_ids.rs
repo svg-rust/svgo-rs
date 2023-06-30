@@ -246,7 +246,7 @@ pub fn apply(doc: &mut Document, params: &Params) {
         minify,
         preserve,
         preserve_prefixes,
-        force
+        ..
     } = params;
 
     let mut v = EnterVisitor::new(params);

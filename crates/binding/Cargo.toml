@@ -1,6 +1,6 @@
 [package]
 authors = ["SyMind <dacongsama@live.com>"]
-name = "bindings"
+name = "binding"
 version = "0.0.0"
 edition = "2021"
 publish = false

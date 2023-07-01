@@ -1,5 +1,6 @@
 #![deny(clippy::all)]
 
+#[cfg(feature = "node")]
 #[macro_use]
 extern crate napi_derive;
 

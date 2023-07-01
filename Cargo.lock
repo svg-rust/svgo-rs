@@ -1654,7 +1654,6 @@ version = "0.0.0"
 dependencies = [
  "linked-hash-map",
  "napi",
- "napi-build",
  "napi-derive",
  "pretty_assertions",
  "regex",
@@ -1663,6 +1662,16 @@ dependencies = [
  "swc_core",
  "swc_xml",
  "testing",
+]
+
+[[package]]
+name = "svgo_binding"
+version = "0.0.0"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "svgo-rs",
 ]
 
 [[package]]

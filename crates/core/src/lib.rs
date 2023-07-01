@@ -12,6 +12,8 @@ use swc_xml::{
 };
 use swc_core::common::{SourceMap, FileName};
 
+#[cfg(test)]
+mod testing;
 mod plugins;
 
 #[cfg(feature = "node")]

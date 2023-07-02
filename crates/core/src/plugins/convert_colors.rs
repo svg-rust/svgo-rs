@@ -25,6 +25,18 @@ fn convert_rgb_to_hex(rgb: &Vec<u8>) -> String {
     format!("#{:06X}", hex_number)
 }
 
+fn get_short_hex(v: u32) -> u32 {
+    ((v & 0x0ff00000) >> 12) | ((v & 0x00000ff0) >> 4)
+}
+
+fn get_long_hex(v: u32) -> u32 {
+    ((v & 0xf000) << 16)
+        | ((v & 0xff00) << 12)
+        | ((v & 0x0ff0) << 8)
+        | ((v & 0x00ff) << 4)
+        | (v & 0x000f)
+}
+
 struct Visitor {
     // Options
     current_color: CurrentColor,
@@ -117,10 +129,14 @@ impl VisitMut for Visitor {
 
             // convert long hex to short hex
             if self.shorthex {
-                let r_hex = "([a-fA-F0-9][a-fA-F0-9])";
-                let reg_hex = Regex::new(&format!("^{}{}{}$", r_hex, r_hex, r_hex)).unwrap();
-                if let Some(caps) = reg_hex.captures(&value) {
-                    value = format!("#{}{}{}", &caps.get(0).unwrap().as_str(), &caps.get(1).unwrap().as_str(), &caps.get(2).unwrap().as_str());
+                if value.len() == 7 && value.starts_with('#') {
+                    let hex_value = &value[1..];
+                    if let Ok(hex) = u32::from_str_radix(hex_value, 16) {
+                        let compact = get_short_hex(hex);
+                        if hex == get_long_hex(compact) {
+                            value = format!("#{:03x}", get_short_hex(hex));
+                        }
+                    }
                 }
             }
 

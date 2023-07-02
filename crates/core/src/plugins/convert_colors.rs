@@ -7,13 +7,15 @@ use swc_xml::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
 };
+use serde::Deserialize;
 
 use super::collections::{get_colors_props, get_colors_names, get_colors_short_names};
 
-enum CurrentColor {
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum CurrentColor {
     Bool(bool),
     Str(String),
-    Regex(String),
 }
 
 /// Convert [r, g, b] to #rrggbb.
@@ -25,21 +27,54 @@ fn convert_rgb_to_hex(rgb: &Vec<u8>) -> String {
     format!("#{:06X}", hex_number)
 }
 
-struct Visitor {
-    // Options
-    current_color: CurrentColor,
-    names2hex: bool,
-    rgb2hex: bool,
-    shorthex: bool,
-    shortname: bool,
-
-    // Collections
-    colors_names: HashMap<&'static str, &'static str>,
-    colors_short_names: HashMap<&'static str, &'static str>,
-    colors_props: Vec<&'static str>
+fn get_short_hex(v: u32) -> u32 {
+    ((v & 0x0ff00000) >> 12) | ((v & 0x00000ff0) >> 4)
 }
 
-impl Default for Visitor {
+fn get_long_hex(v: u32) -> u32 {
+    ((v & 0xf000) << 16)
+        | ((v & 0xff00) << 12)
+        | ((v & 0x0ff0) << 8)
+        | ((v & 0x00ff) << 4)
+        | (v & 0x000f)
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Params {
+    #[serde(default = "default_current_color")]
+    pub current_color: CurrentColor,
+    #[serde(default = "default_names2hex")]
+    pub names2hex: bool,
+    #[serde(default = "default_rgb2hex")]
+    pub rgb2hex: bool,
+    #[serde(default = "default_shorthex")]
+    pub shorthex: bool,
+    #[serde(default = "default_shortname")]
+    pub shortname: bool,
+}
+
+fn default_current_color() -> CurrentColor {
+    CurrentColor::Bool(false)
+}
+
+fn default_names2hex() -> bool {
+    true
+}
+
+fn default_rgb2hex() -> bool {
+    true
+}
+
+fn default_shorthex() -> bool {
+    true
+}
+
+fn default_shortname() -> bool {
+    true
+}
+
+impl Default for Params {
     fn default() -> Self {
         Self {
             current_color: CurrentColor::Bool(false),
@@ -47,6 +82,24 @@ impl Default for Visitor {
             rgb2hex: true,
             shorthex: true,
             shortname: true,
+        }
+    }
+}
+
+struct Visitor<'a> {
+    params: &'a Params,
+
+    // Collections
+    colors_names: HashMap<&'static str, &'static str>,
+    colors_short_names: HashMap<&'static str, &'static str>,
+    colors_props: Vec<&'static str>
+}
+
+impl<'a> Visitor<'a> {
+    fn new(params: &'a Params) -> Self {
+        println!("{:?}", params);
+        Self {
+            params,
             colors_names: get_colors_names(),
             colors_short_names: get_colors_short_names(),
             colors_props: get_colors_props(),
@@ -54,7 +107,7 @@ impl Default for Visitor {
     }
 }
 
-impl VisitMut for Visitor {
+impl VisitMut for Visitor<'_> {
     fn visit_mut_attribute(&mut self, n: &mut Attribute) {
         if !self.colors_props.contains(&n.name.to_string().as_str()) {
             return;
@@ -64,7 +117,7 @@ impl VisitMut for Visitor {
             let mut value = value.to_string();
 
             // convert colors to currentColor
-            let matched = match &self.current_color {
+            let matched = match &self.params.current_color {
                 CurrentColor::Bool(b) => {
                     if *b {
                         value != "none"
@@ -73,17 +126,13 @@ impl VisitMut for Visitor {
                     }
                 },
                 CurrentColor::Str(s) => value == *s,
-                CurrentColor::Regex(re) => {
-                    let re = Regex::new(re).unwrap();
-                    re.is_match(&value)
-                },
             };
             if matched {
                 value = "currentColor".to_string();
             }
 
             // convert color name keyword to long hex
-            if self.names2hex {
+            if self.params.names2hex {
                 let color_name = value.to_lowercase();
                 if let Some(hex) = self.colors_names.get(&color_name.as_str()) {
                     value = hex.to_string();
@@ -91,7 +140,7 @@ impl VisitMut for Visitor {
             }
 
             // convert rgb() to long hex
-            if self.rgb2hex {
+            if self.params.rgb2hex {
                 let r_number = "([+-]?(?:\\d*\\.\\d+|\\d+\\.?)%?)";
                 let r_comma = "\\s*,\\s*";
                 let reg_rgb = Regex::new(&format!("^rgb\\(\\s*{}{}{}{}{}", r_number, r_comma, r_number, r_comma, r_number)).unwrap();
@@ -116,16 +165,20 @@ impl VisitMut for Visitor {
             }
 
             // convert long hex to short hex
-            if self.shorthex {
-                let r_hex = "([a-fA-F0-9][a-fA-F0-9])";
-                let reg_hex = Regex::new(&format!("^{}{}{}$", r_hex, r_hex, r_hex)).unwrap();
-                if let Some(caps) = reg_hex.captures(&value) {
-                    value = format!("#{}{}{}", &caps.get(0).unwrap().as_str(), &caps.get(1).unwrap().as_str(), &caps.get(2).unwrap().as_str());
+            if self.params.shorthex {
+                if value.len() == 7 && value.starts_with('#') {
+                    let hex_value = &value[1..];
+                    if let Ok(hex) = u32::from_str_radix(hex_value, 16) {
+                        let compact = get_short_hex(hex);
+                        if hex == get_long_hex(compact) {
+                            value = format!("#{:03x}", get_short_hex(hex));
+                        }
+                    }
                 }
             }
 
             // convert hex to short name
-            if self.shortname {
+            if self.params.shortname {
                 let color_name = value.to_lowercase();
                 if let Some(short_name) = self.colors_short_names.get(color_name.as_str()) {
                     value = short_name.to_string();
@@ -141,8 +194,8 @@ impl VisitMut for Visitor {
     }
 }
 
-pub fn apply(doc: &mut Document) {
-    let mut v: Visitor = Default::default();
+pub fn apply(doc: &mut Document, params: &Params) {
+    let mut v = Visitor::new(params);
     doc.visit_mut_with(&mut v);
 }
 
@@ -155,9 +208,6 @@ mod tests {
 
     #[testing::fixture("__fixture__/plugins/convertColors*.svg")]
     fn pass(input: PathBuf) {
-        test_plugin(
-            |doc| apply(doc),
-            input,
-        );
+        test_plugin(apply, input);
     }
 }

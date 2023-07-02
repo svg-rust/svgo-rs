@@ -8,6 +8,7 @@ use swc_xml::{
     visit::{VisitMut, VisitMutWith},
 };
 use regex::Regex;
+use serde::Deserialize;
 
 // relative to px
 fn get_absolute_lengths() -> HashMap<&'static str, f64> {
@@ -53,14 +54,35 @@ fn remove_leading_zero(num: f64) -> String {
     str_num
 }
 
-struct Visitor {
-    float_precision: i32,
-    leading_zero: bool,
-    default_px: bool,
-    convert_to_px: bool,
+#[derive(Debug, Deserialize)]
+pub struct Params {
+    #[serde(default = "default_float_precision")]
+    pub float_precision: i32,
+    #[serde(default = "default_leading_zero")]
+    pub leading_zero: bool,
+    #[serde(default = "default_default_px")]
+    pub default_px: bool,
+    #[serde(default = "default_convert_to_px")]
+    pub convert_to_px: bool,
 }
 
-impl Default for Visitor {
+fn default_float_precision() -> i32 {
+    3
+}
+
+fn default_leading_zero() -> bool {
+    true
+}
+
+fn default_default_px() -> bool {
+    true
+}
+
+fn default_convert_to_px() -> bool {
+    true
+}
+
+impl Default for Params {
     fn default() -> Self {
         Self {
             float_precision: 3,
@@ -71,25 +93,19 @@ impl Default for Visitor {
     }
 }
 
-impl Visitor {
-    fn new(params: &Params) -> Self {
-        let Params {
-            float_precision,
-            leading_zero,
-            default_px,
-            convert_to_px,
-        } = *params;
+struct Visitor<'a> {
+    params: &'a Params,
+}
 
+impl<'a> Visitor<'a> {
+    fn new(params: &'a Params) -> Self {
         Self {
-            float_precision,
-            leading_zero,
-            default_px,
-            convert_to_px,
+            params,
         }
     }
 }
 
-impl VisitMut for Visitor {
+impl VisitMut for Visitor<'_> {
     fn visit_mut_element(&mut self, n: &mut Element) {
         n.visit_mut_children_with(self);
 
@@ -102,7 +118,7 @@ impl VisitMut for Visitor {
                     .collect();
                 let rounded_nums: Vec<String> = nums
                     .into_iter()
-                    .map(|num| round_value(&num, self.float_precision))
+                    .map(|num| round_value(&num, self.params.float_precision))
                     .collect();
                 view_box.value = Some(rounded_nums.join(" ").into());
             }
@@ -121,15 +137,15 @@ impl VisitMut for Visitor {
                     let unit = captures.get(3).map_or("", |m| m.as_str());
 
                     // round it to the fixed precision
-                    let mut num = round(num_str.parse::<f64>().unwrap_or(0.0), self.float_precision);
+                    let mut num = round(num_str.parse::<f64>().unwrap_or(0.0), self.params.float_precision);
                     let mut units = unit;
 
                     // convert absolute values to pixels
-                    if self.convert_to_px {
+                    if self.params.convert_to_px {
                         let absolute_lengths = get_absolute_lengths();
                         let len = absolute_lengths.get(unit);
                         if let Some(len) = len {
-                            let px_num = round(len * num_str.parse::<f64>().unwrap_or(0.0), self.float_precision);
+                            let px_num = round(len * num_str.parse::<f64>().unwrap_or(0.0), self.params.float_precision);
                             if px_num.to_string().len() < value.len() {
                                 num = px_num;
                                 units = "px";
@@ -138,38 +154,20 @@ impl VisitMut for Visitor {
                     }
 
                     // and remove leading zero
-                    let str = if self.leading_zero {
+                    let str = if self.params.leading_zero {
                         remove_leading_zero(num)
                     } else {
                         num.to_string()
                     };
 
                     // remove default 'px' units
-                    if self.default_px && units == "px" {
+                    if self.params.default_px && units == "px" {
                         units = "";
                     }
 
                     attr.value = Some(format!("{}{}", str, units).into());
                 }
             }
-        }
-    }
-}
-
-pub struct Params {
-    pub float_precision: i32,
-    pub leading_zero: bool,
-    pub default_px: bool,
-    pub convert_to_px: bool,
-}
-
-impl Default for Params {
-    fn default() -> Self {
-        Self {
-            float_precision: 3,
-            leading_zero: true,
-            default_px: true,
-            convert_to_px: true,
         }
     }
 }
@@ -188,9 +186,6 @@ mod tests {
 
     #[testing::fixture("__fixture__/plugins/cleanupNumericValues*.svg")]
     fn pass(input: PathBuf) {
-        test_plugin(
-            |doc| apply(doc, &Default::default()),
-            input,
-        );
+        test_plugin(apply, input);
     }
 }

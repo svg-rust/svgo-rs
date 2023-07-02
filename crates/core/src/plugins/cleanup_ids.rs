@@ -14,10 +14,10 @@ use serde::Deserialize;
 use super::collections;
 
 struct EnterVisitor<'a> {
-    /// Options
+    // Options
     force: bool,
 
-    /// States
+    // States
     references_props: Vec<&'static str>,
     deoptimized: bool,
     node_by_id: LinkedHashMap<String, &'a mut Element>,

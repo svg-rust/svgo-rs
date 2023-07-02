@@ -106,11 +106,9 @@ impl<'a> Visitor<'a> {
 }
 
 impl VisitMut for Visitor<'_> {
-    fn visit_mut_element(&mut self, n: &mut Element) {
-        n.visit_mut_children_with(self);
-
-        if let Some(view_box) = n.attributes.iter_mut().find(|attr| attr.name.to_string() == "viewBox") {
-            if let Some(value) = view_box.value.clone() {
+    fn visit_mut_attribute(&mut self, n: &mut Attribute) {
+        if n.name.to_string() == "viewBox" {
+            if let Some(value) = n.value.clone() {
                 let nums: Vec<String> = value.to_string()
                     .split(|c: char| c.is_whitespace() || c == ',')
                     .filter(|s| *s != "")
@@ -120,53 +118,50 @@ impl VisitMut for Visitor<'_> {
                     .into_iter()
                     .map(|num| round_value(&num, self.params.float_precision))
                     .collect();
-                view_box.value = Some(rounded_nums.join(" ").into());
+                n.value = Some(rounded_nums.join(" ").into());
             }
         }
 
-        let reg_numeric_values = Regex::new(r#"^([-+]?\d*\.?\d+([eE][-+]?\d+)?)(px|pt|pc|mm|cm|m|in|ft|em|ex|%)?$"#).unwrap();
-        for attr in n.attributes.iter_mut() {
-            // The `version` attribute is a text string and cannot be rounded
-            if attr.name.to_string() == "version" {
-                continue;
-            }
+        if n.name.to_string() == "version" {
+            return;
+        }
 
-            if let Some(value) = attr.value.clone() {
-                if let Some(captures) = reg_numeric_values.captures(&value.to_string()) {
-                    let num_str = captures.get(1).map_or("", |m| m.as_str());
-                    let unit = captures.get(3).map_or("", |m| m.as_str());
+        if let Some(value) = n.value.clone() {
+            let reg_numeric_values = Regex::new(r#"^([-+]?\d*\.?\d+([eE][-+]?\d+)?)(px|pt|pc|mm|cm|m|in|ft|em|ex|%)?$"#).unwrap();
+            if let Some(captures) = reg_numeric_values.captures(&value.to_string()) {
+                let num_str = captures.get(1).map_or("", |m| m.as_str());
+                let unit = captures.get(3).map_or("", |m| m.as_str());
 
-                    // round it to the fixed precision
-                    let mut num = round(num_str.parse::<f64>().unwrap_or(0.0), self.params.float_precision);
-                    let mut units = unit;
+                // round it to the fixed precision
+                let mut num = round(num_str.parse::<f64>().unwrap_or(0.0), self.params.float_precision);
+                let mut units = unit;
 
-                    // convert absolute values to pixels
-                    if self.params.convert_to_px {
-                        let absolute_lengths = get_absolute_lengths();
-                        let len = absolute_lengths.get(unit);
-                        if let Some(len) = len {
-                            let px_num = round(len * num_str.parse::<f64>().unwrap_or(0.0), self.params.float_precision);
-                            if px_num.to_string().len() < value.len() {
-                                num = px_num;
-                                units = "px";
-                            }
+                // convert absolute values to pixels
+                if self.params.convert_to_px {
+                    let absolute_lengths = get_absolute_lengths();
+                    let len = absolute_lengths.get(unit);
+                    if let Some(len) = len {
+                        let px_num = round(len * num_str.parse::<f64>().unwrap_or(0.0), self.params.float_precision);
+                        if px_num.to_string().len() < value.len() {
+                            num = px_num;
+                            units = "px";
                         }
                     }
-
-                    // and remove leading zero
-                    let str = if self.params.leading_zero {
-                        remove_leading_zero(num)
-                    } else {
-                        num.to_string()
-                    };
-
-                    // remove default 'px' units
-                    if self.params.default_px && units == "px" {
-                        units = "";
-                    }
-
-                    attr.value = Some(format!("{}{}", str, units).into());
                 }
+
+                // and remove leading zero
+                let str = if self.params.leading_zero {
+                    remove_leading_zero(num)
+                } else {
+                    num.to_string()
+                };
+
+                // remove default 'px' units
+                if self.params.default_px && units == "px" {
+                    units = "";
+                }
+
+                n.value = Some(format!("{}{}", str, units).into());
             }
         }
     }

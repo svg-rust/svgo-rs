@@ -1,13 +1,13 @@
-use std::{sync::Arc, borrow::Borrow, path::PathBuf, fs};
+use std::{path::PathBuf, fs};
 
 use regex::Regex;
 use serde::de::DeserializeOwned;
-use swc_core::common::{SourceMap, FileName};
 use swc_xml::{
     ast::Document,
-    parser::{parse_file_as_document, parser},
     codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit},
 };
+
+use crate::parser::parse_svg;
 
 #[cfg(test)]
 use pretty_assertions::assert_eq;
@@ -32,15 +32,7 @@ pub fn test_plugin<F, P>(
         Default::default()
     };
 
-    let cm = Arc::<SourceMap>::default();
-    let fm = cm.new_source_file(FileName::Anon, input.to_string());
-
-    let mut errors = vec![];
-    let mut doc = parse_file_as_document(
-        fm.borrow(),
-        parser::ParserConfig::default(),
-        &mut errors
-    ).unwrap();
+    let mut doc = parse_svg(input.to_string()).unwrap();
 
     apply(&mut doc, &params);
 
@@ -48,7 +40,6 @@ pub fn test_plugin<F, P>(
     let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
     let gen_conf = CodegenConfig {
         minify: true,
-        scripting_enabled: false,
         ..Default::default()
     };
     let mut gen = CodeGenerator::new(wr, gen_conf);

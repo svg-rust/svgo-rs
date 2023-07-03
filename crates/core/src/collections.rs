@@ -91,6 +91,13 @@ pub fn get_elems_groups() -> HashMap<&'static str, Vec<&'static str>> {
     ])
 }
 
+pub fn get_text_elems() -> Vec<&'static str> {
+    let mut elems_groups = get_elems_groups();
+    let text_elems = elems_groups.get_mut("textContent").unwrap();
+    text_elems.push("title");
+    text_elems.to_vec()
+}
+
 // https://www.w3.org/TR/SVG11/propidx.html
 pub fn get_inheritable_attrs() -> Vec<&'static str> {
     vec![

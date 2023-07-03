@@ -4,17 +4,19 @@
 #[macro_use]
 extern crate napi_derive;
 
-use std::sync::Arc;
-
-use swc_xml::{
-    parser::{parse_file_as_document, parser},
-    codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit},
+use swc_xml::codegen::{
+    writer::basic::BasicXmlWriter,
+    CodeGenerator,
+    CodegenConfig,
+    Emit,
 };
-use swc_core::common::{SourceMap, FileName};
+
+mod collections;
+mod parser;
+mod plugins;
 
 #[cfg(test)]
 mod testing;
-mod plugins;
 
 #[cfg(feature = "node")]
 #[napi(object)]
@@ -29,15 +31,7 @@ pub struct Output {
 
 /// The core of SVGO
 pub fn optimize(input: String) -> Output {
-    let cm = Arc::<SourceMap>::default();
-    let fm = cm.new_source_file(FileName::Anon, input);
-
-    let mut errors = vec![];
-    let mut doc = parse_file_as_document(
-        &fm,
-        parser::ParserConfig::default(),
-        &mut errors
-    ).unwrap();
+    let mut doc = parser::parse_svg(input).unwrap();
 
     plugins::cleanup_attrs::apply(&mut doc);
     plugins::cleanup_enable_background::apply(&mut doc);

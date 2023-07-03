@@ -24,7 +24,7 @@ use swc_xml::{
 };
 use serde::Deserialize;
 
-use super::collections::{get_elems_groups, get_inheritable_attrs};
+use crate::collections::{get_elems_groups, get_inheritable_attrs};
 
 #[derive(Debug, Deserialize, Default)]
 pub struct Params {

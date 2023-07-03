@@ -11,7 +11,7 @@ use regex::Regex;
 use linked_hash_map::LinkedHashMap;
 use serde::Deserialize;
 
-use super::collections;
+use crate::collections;
 
 struct EnterVisitor<'a> {
     // Options

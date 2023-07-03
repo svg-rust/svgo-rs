@@ -9,7 +9,7 @@ use swc_xml::{
 };
 use serde::Deserialize;
 
-use super::collections::{get_colors_props, get_colors_names, get_colors_short_names};
+use crate::collections::{get_colors_props, get_colors_names, get_colors_short_names};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -97,7 +97,6 @@ struct Visitor<'a> {
 
 impl<'a> Visitor<'a> {
     fn new(params: &'a Params) -> Self {
-        println!("{:?}", params);
         Self {
             params,
             colors_names: get_colors_names(),

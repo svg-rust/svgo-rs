@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate napi_derive;
 
-use swc_xml::codegen::{
+use swc_xml_codegen::{
     writer::basic::BasicXmlWriter,
     CodeGenerator,
     CodegenConfig,

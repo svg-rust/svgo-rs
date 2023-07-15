@@ -2,10 +2,8 @@ use std::{path::PathBuf, fs};
 
 use regex::Regex;
 use serde::de::DeserializeOwned;
-use swc_xml::{
-    ast::Document,
-    codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit},
-};
+use swc_xml_ast::Document;
+use swc_xml_codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit};
 
 use crate::parser::parse_svg;
 

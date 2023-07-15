@@ -1670,7 +1670,10 @@ dependencies = [
  "serde",
  "serde_json",
  "swc_core",
- "swc_xml",
+ "swc_xml_ast",
+ "swc_xml_codegen",
+ "swc_xml_parser",
+ "swc_xml_visit",
  "testing",
 ]
 
@@ -1726,9 +1729,9 @@ dependencies = [
 
 [[package]]
 name = "swc_atoms"
-version = "0.5.6"
+version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93d0307dc4bfd107d49c7528350c372758cfca94fb503629b9a056e6a1572860"
+checksum = "3b1370fa1d31e18a999928aaf18f166616b16c5cb7033ced7d50d06858c5fd90"
 dependencies = [
  "once_cell",
  "rustc-hash",
@@ -1785,9 +1788,9 @@ dependencies = [
 
 [[package]]
 name = "swc_common"
-version = "0.31.16"
+version = "0.31.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6414bd4e553f5638961d39b07075ffd37a3d63176829592f4a5900260d94ca1"
+checksum = "e1362dec11e2270048e686f0c7d4a9087fcf1ec9d27147c2c226929a806a86f6"
 dependencies = [
  "ahash 0.8.3",
  "ast_node",
@@ -2438,22 +2441,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "swc_xml"
-version = "0.11.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "371f05ff74fbc7f8b40b9eb1d69e5d7db2626e6810db571e759f149ecdb73e1b"
-dependencies = [
- "swc_xml_ast",
- "swc_xml_codegen",
- "swc_xml_parser",
- "swc_xml_visit",
-]
-
-[[package]]
 name = "swc_xml_ast"
-version = "0.10.16"
+version = "0.10.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afe27404d5ad6450987bda79911d96e0067506f8217c2ef5c5fdaec6aa37f97c"
+checksum = "9518744bd4d36746bc9c07b34f8595907cd083af35c7e3df872deac8083e0770"
 dependencies = [
  "is-macro",
  "string_enum",
@@ -2463,9 +2454,9 @@ dependencies = [
 
 [[package]]
 name = "swc_xml_codegen"
-version = "0.11.21"
+version = "0.11.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5f8680358afab9eec41e6223854e3427c71229ee667e61f64dac61fdcda5cf9"
+checksum = "d2aad78dd8de291b7810f93f8b150e097a4ed2e33ffa3b84cc6420d60a366bca"
 dependencies = [
  "auto_impl",
  "bitflags 2.3.3",
@@ -2491,9 +2482,9 @@ dependencies = [
 
 [[package]]
 name = "swc_xml_parser"
-version = "0.11.19"
+version = "0.11.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a4319c93072852a37ecd43cdef603dfcd90c394c3c3a53af9a80053b1211e18"
+checksum = "f8665ce4150516ff47296eb2ff3f565da951071c08047acf58e761f292f6440c"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -2502,9 +2493,9 @@ dependencies = [
 
 [[package]]
 name = "swc_xml_visit"
-version = "0.10.16"
+version = "0.10.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d75aeae4f3ed0543920e98dcaf734fe8506cdc8ffeeb25e86e4851310a836909"
+checksum = "9b5b503dc405c944fa845c561352bf5c60491a45265598c350b3ea121ebfdf3c"
 dependencies = [
  "serde",
  "swc_atoms",

@@ -1,9 +1,7 @@
 // cleanups attributes from newlines, trailing and repeating spaces
 
-use swc_xml::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_xml_ast::*;
+use swc_xml_visit::{VisitMut, VisitMutWith};
 use regex::{Regex, Captures};
 
 struct Visitor {
@@ -65,12 +63,10 @@ pub fn apply(doc: &mut Document) {
 #[cfg(test)]
 mod tests {
     use swc_core::common::{SourceMap, FileName};
-    use swc_xml::{
-        parser::{parse_file_as_document, parser},
-        codegen::{
-            writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
-            CodeGenerator, CodegenConfig, Emit,
-        },
+    use swc_xml_parser::{parse_file_as_document, parser};
+    use swc_xml_codegen::{
+        writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
+        CodeGenerator, CodegenConfig, Emit,
     };
 
     #[cfg(test)]

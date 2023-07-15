@@ -30,7 +30,10 @@ swc_core = { version = "0.78.28", features = [
   "base_node",
   "__parser",
 ] }
-swc_xml = "0.11.21"
+swc_xml_ast = "0.10.17"
+swc_xml_codegen = "0.11.22"
+swc_xml_parser = "0.11.20"
+swc_xml_visit = "0.10.17"
 linked-hash-map = "0.5.6"
 
 [dev-dependencies]

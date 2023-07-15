@@ -3,10 +3,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use swc_xml::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_xml_ast::*;
+use swc_xml_visit::{VisitMut, VisitMutWith};
 use regex::Regex;
 use linked_hash_map::LinkedHashMap;
 use serde::Deserialize;
@@ -351,10 +349,8 @@ mod tests {
     use std::{sync::Arc, borrow::Borrow, path::PathBuf, fs};
 
     use swc_core::common::{SourceMap, FileName};
-    use swc_xml::{
-        parser::{parse_file_as_document, parser},
-        codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit},
-    };
+    use swc_xml_parser::{parse_file_as_document, parser};
+    use swc_xml_codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit};
 
     #[cfg(test)]
     use pretty_assertions::assert_eq;

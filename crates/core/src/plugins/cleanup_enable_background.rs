@@ -7,10 +7,8 @@
 //             ⬇
 // <svg width="100" height="50">
 
-use swc_xml::{
-    ast::*,
-    visit::{VisitMut, Visit, VisitWith, VisitMutWith},
-};
+use swc_xml_ast::*;
+use swc_xml_visit::{VisitMut, Visit, VisitWith, VisitMutWith};
 use regex::Regex;
 
 struct Visitor {
@@ -107,12 +105,10 @@ mod tests {
     use std::{sync::Arc, borrow::Borrow};
 
     use swc_core::common::{SourceMap, FileName};
-    use swc_xml::{
-        parser::{parse_file_as_document, parser},
-        codegen::{
-            writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
-            CodeGenerator, CodegenConfig, Emit,
-        },
+    use swc_xml_parser::{parse_file_as_document, parser};
+    use swc_xml_codegen::{
+        writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
+        CodeGenerator, CodegenConfig, Emit,
     };
 
     use super::*;

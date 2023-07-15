@@ -1,11 +1,9 @@
 use std::sync::Arc;
 
 use regex::Regex;
-use swc_xml::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-    parser::{parse_file_as_document, parser, error::Error},
-};
+use swc_xml_ast::*;
+use swc_xml_visit::{VisitMut, VisitMutWith};
+use swc_xml_parser::{parse_file_as_document, parser, error::Error};
 use swc_core::common::{SourceMap, FileName};
 
 use crate::collections::get_text_elems;

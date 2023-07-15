@@ -18,10 +18,8 @@
 use std::collections::{HashSet, HashMap};
 
 use swc_core::common::DUMMY_SP;
-use swc_xml::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_xml_ast::*;
+use swc_xml_visit::{VisitMut, VisitMutWith};
 use serde::Deserialize;
 
 use crate::collections::{get_elems_groups, get_inheritable_attrs};

@@ -3,10 +3,8 @@
 use std::collections::HashMap;
 
 use regex::Regex;
-use swc_xml::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_xml_ast::*;
+use swc_xml_visit::{VisitMut, VisitMutWith};
 use serde::Deserialize;
 
 use crate::collections::{get_colors_props, get_colors_names, get_colors_short_names};

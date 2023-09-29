@@ -14,6 +14,7 @@ use swc_xml_codegen::{
 mod collections;
 mod parser;
 mod plugins;
+mod stringifier;
 
 #[cfg(test)]
 mod testing;

@@ -45,7 +45,7 @@ impl Default for Visitor {
 impl Visitor {
     fn has_animated_attr(&mut self, n: &Element, name: &str) -> bool {
         if self.elems_groups.get("animation").unwrap().contains(&n.tag_name.to_string().as_str()) &&
-            n.attributes.iter().any(|attr| attr.name.to_string() == name)
+            n.attributes.iter().any(|attr| attr.name.to_string() == "attributeName" && attr.value == Some(name.into()))
         {
             return true;
         }
@@ -103,9 +103,8 @@ impl VisitMut for Visitor {
                                     !n_attrs.contains("transform") &&
                                     !first_child_attrs.contains("transform")))
                         {
-                            let mut attributes = n.attributes.clone();
-                            attributes.reverse();
-                            for (index, attr) in attributes.iter().enumerate() {
+                            let mut new_attributes = vec![];
+                            for attr in n.attributes.clone().into_iter() {
                                 let name = attr.name.to_string();
                                 if let Some(value) = attr.value.clone() {
                                     // avoid copying to not conflict with animated attribute
@@ -140,20 +139,27 @@ impl VisitMut for Visitor {
                                             }
                                         }
                                     }
-                                    n.attributes.remove(attributes.len() - index - 1);
+                                    continue;
                                 }
+                                new_attributes.push(attr);
                             }
+                            n.attributes = new_attributes;
                         }
                     }
                 }
             }
         });
 
-        let mut new_children = vec![];
-        p.children.clone().iter().for_each(|n| {
-            if let Child::Element(n) = n {
+        let mut new_children: Vec<Child> = vec![];
+        for child in p.children.iter() {
+            if let Child::Element(n) = child {
+                if n.tag_name.to_string() != "g" || n.children.len() == 0 {
+                    new_children.push(child.clone());
+                    continue;
+                }
+
                 // collapse groups without attributes
-                if n.attributes.len() == 0 {
+                if n.tag_name.to_string() != "g" || n.attributes.len() == 0 {
                     // animation elements "add" attributes to group
                     // group should be preserved
                     for child in n.children.iter() {
@@ -167,11 +173,11 @@ impl VisitMut for Visitor {
                     for child in n.children.clone() {
                         new_children.push(child);
                     }
-                    return;
+                    continue;
                 }
             }
-            new_children.push(n.clone());
-        });
+            new_children.push(child.clone());
+        }
         p.children = new_children;
     }
 }
@@ -188,7 +194,7 @@ mod tests {
     use crate::testing::test_plugin;
     use super::*;
 
-    #[testing::fixture("__fixture__/plugins/collapseGroups*.svg")]
+    #[testing::fixture("__fixture__/plugins/collapseGroups.*.svg")]
     fn pass(input: PathBuf) {
         test_plugin(apply, input);
     }

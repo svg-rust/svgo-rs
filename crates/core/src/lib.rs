@@ -12,6 +12,8 @@ mod stringifier;
 #[cfg(test)]
 mod testing;
 
+use stringifier::{stringify_svg, StringifyOptions};
+
 #[cfg(feature = "node")]
 #[napi(object)]
 pub struct Output {
@@ -32,7 +34,11 @@ pub fn optimize(input: String) -> Output {
     plugins::cleanup_ids::apply(&mut doc, &Default::default());
     plugins::cleanup_numeric_values::apply(&mut doc, &Default::default());
 
+    let data = stringify_svg(&doc, StringifyOptions {
+        pretty: true,
+        ..Default::default()
+    });
     Output {
-        data: stringifier::stringify_svg(&doc)
+        data,
     }
 }

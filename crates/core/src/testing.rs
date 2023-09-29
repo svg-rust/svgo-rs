@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 use swc_xml_ast::Document;
 
 use crate::parser::parse_svg;
-use crate::stringifier;
+use crate::stringifier::{stringify_svg, StringifyOptions};
 
 #[cfg(test)]
 use pretty_assertions::assert_eq;
@@ -33,5 +33,9 @@ pub fn test_plugin<F, P>(
     let mut doc = parse_svg(input.to_string()).unwrap();
 
     apply(&mut doc, &params);
-    assert_eq!(stringifier::stringify_svg(&doc), expected);
+    let result = stringify_svg(&doc, StringifyOptions {
+        pretty: true,
+        ..Default::default()
+    });
+    assert_eq!(result.trim_end(), expected);
 }

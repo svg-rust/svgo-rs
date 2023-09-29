@@ -346,30 +346,23 @@ pub fn apply(doc: &mut Document, params: &Params) {
 
 #[cfg(test)]
 mod tests {
-    use std::{sync::Arc, borrow::Borrow, path::PathBuf, fs};
-
-    use swc_core::common::{SourceMap, FileName};
-    use swc_xml_parser::{parse_file_as_document, parser};
+    use std::{path::PathBuf, fs};
 
     #[cfg(test)]
     use pretty_assertions::assert_eq;
 
-    use crate::stringifier;
+    use crate::parser::parse_svg;
+    use crate::stringifier::{stringify_svg, StringifyOptions};
     use super::*;
 
-    fn code_test(input: &str, expected: &str, params: &Params) {
-        let cm = Arc::<SourceMap>::default();
-        let fm = cm.new_source_file(FileName::Anon, input.to_string());
-
-        let mut errors = vec![];
-        let mut doc = parse_file_as_document(
-            fm.borrow(),
-            parser::ParserConfig::default(),
-            &mut errors
-        ).unwrap();
-
+    fn code_test(input: String, expected: String, params: &Params) {
+        let mut doc = parse_svg(input).unwrap();
         apply(&mut doc, &params);
-        assert_eq!(stringifier::stringify_svg(&doc), expected);
+        let result = stringify_svg(&doc, StringifyOptions {
+            pretty: true,
+            ..Default::default()
+        });
+        assert_eq!(result.trim_end(), expected);
     }
 
     fn document_test(input: PathBuf) {
@@ -386,7 +379,7 @@ mod tests {
             Default::default()
         };
 
-        code_test(input, expected, &params);
+        code_test(input.to_string(), expected.to_string(), &params);
     }
 
     #[testing::fixture("__fixture__/plugins/cleanupIds*.svg")]

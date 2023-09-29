@@ -102,27 +102,21 @@ pub fn apply(doc: &mut Document) {
 
 #[cfg(test)]
 mod tests {
-    use std::{sync::Arc, borrow::Borrow};
+    #[cfg(test)]
+    use pretty_assertions::assert_eq;
 
-    use swc_core::common::{SourceMap, FileName};
-    use swc_xml_parser::{parse_file_as_document, parser};
-
-    use crate::stringifier;
+    use crate::parser::parse_svg;
+    use crate::stringifier::{stringify_svg, StringifyOptions};
     use super::*;
 
-    fn code_test(input: &str, expected: &str) {
-        let cm = Arc::<SourceMap>::default();
-        let fm = cm.new_source_file(FileName::Anon, input.to_string());
-
-        let mut errors = vec![];
-        let mut doc = parse_file_as_document(
-            fm.borrow(),
-            parser::ParserConfig::default(),
-            &mut errors
-        ).unwrap();
-
+    fn code_test(input: String, expected: String) {
+        let mut doc = parse_svg(input).unwrap();
         apply(&mut doc);
-        assert_eq!(stringifier::stringify_svg(&doc), expected);
+        let result = stringify_svg(&doc, StringifyOptions {
+            pretty: true,
+            ..Default::default()
+        });
+        assert_eq!(result.trim_end(), expected);
     }
 
     #[test]
@@ -131,19 +125,19 @@ mod tests {
             r#"<svg xmlns="http://www.w3.org/2000/svg" width="100.5" height=".5" enable-background="new 0 0 100.5 .5">
     <defs>
         <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
+            <feOffset dx="0" dy="75"/>
         </filter>
     </defs>
     test
-</svg>"#,
+</svg>"#.to_string(),
             r#"<svg xmlns="http://www.w3.org/2000/svg" width="100.5" height=".5">
     <defs>
         <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
+            <feOffset dx="0" dy="75"/>
         </filter>
     </defs>
     test
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 
@@ -153,19 +147,19 @@ mod tests {
             r#"<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" enable-background="new 0 0 100 50">
     <defs>
         <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
+            <feOffset dx="0" dy="75"/>
         </filter>
     </defs>
     test
-</svg>"#,
+</svg>"#.to_string(),
             r#"<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" enable-background="new 0 0 100 50">
     <defs>
         <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
+            <feOffset dx="0" dy="75"/>
         </filter>
     </defs>
     test
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 
@@ -175,23 +169,23 @@ mod tests {
             r#"<svg xmlns="http://www.w3.org/2000/svg">
     <defs>
         <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
+            <feOffset dx="0" dy="75"/>
         </filter>
     </defs>
     <mask width="100" height="50" enable-background="new 0 0 100 50">
         test
     </mask>
-</svg>"#,
+</svg>"#.to_string(),
             r#"<svg xmlns="http://www.w3.org/2000/svg">
     <defs>
         <filter id="ShiftBGAndBlur">
-            <feOffset dx="0" dy="75" />
+            <feOffset dx="0" dy="75"/>
         </filter>
     </defs>
     <mask width="100" height="50" enable-background="new">
         test
     </mask>
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 
@@ -202,12 +196,12 @@ mod tests {
     <mask width="100" height="50" enable-background="new 0 0 100 50">
         test
     </mask>
-</svg>"#,
+</svg>"#.to_string(),
             r#"<svg xmlns="http://www.w3.org/2000/svg">
     <mask width="100" height="50">
         test
     </mask>
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 }

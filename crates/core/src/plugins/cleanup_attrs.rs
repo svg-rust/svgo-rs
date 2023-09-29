@@ -62,28 +62,21 @@ pub fn apply(doc: &mut Document) {
 
 #[cfg(test)]
 mod tests {
-    use swc_core::common::{SourceMap, FileName};
-    use swc_xml_parser::{parse_file_as_document, parser};
-
     #[cfg(test)]
     use pretty_assertions::assert_eq;
 
-    use crate::stringifier;
+    use crate::parser::parse_svg;
+    use crate::stringifier::{stringify_svg, StringifyOptions};
     use super::*;
 
-    fn code_test(input: &str, expected: &str) {
-        let cm = SourceMap::default();
-        let fm = cm.new_source_file(FileName::Anon, input.to_string());
-
-        let mut errors = vec![];
-        let mut doc = parse_file_as_document(
-            &fm,
-            parser::ParserConfig::default(),
-            &mut errors
-        ).unwrap();
-
+    fn code_test(input: String, expected: String) {
+        let mut doc = parse_svg(input).unwrap();
         apply(&mut doc);
-        assert_eq!(stringifier::stringify_svg(&doc), expected);
+        let result = stringify_svg(&doc, StringifyOptions {
+            pretty: true,
+            ..Default::default()
+        });
+        assert_eq!(result.trim_end(), expected);
     }
 
     #[test]
@@ -93,10 +86,10 @@ mod tests {
 " attr="a      b" attr2="a
 b">
     test
-</svg>"#,
+</svg>"#.to_string(),
             r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b" attr2="a b">
     test
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 
@@ -106,10 +99,10 @@ b">
             r#"<svg xmlns="  http://www.w3.org/2000/svg
 " attr="a      b">
     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
-</svg>"#,
+</svg>"#.to_string(),
             r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b">
     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 
@@ -123,12 +116,12 @@ b">
     b">
         test
     </foo>
-</svg>"#,
+</svg>"#.to_string(),
         r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b" attr2="a b">
     <foo attr="a b" attr2="a b">
         test
     </foo>
-</svg>"#,
+</svg>"#.to_string(),
         );
     }
 }

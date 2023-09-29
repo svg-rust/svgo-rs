@@ -10,32 +10,32 @@ pub enum Eol {
 }
 
 pub struct StringifyOptions {
-    doctype_start: String,
-    doctype_end: String,
-    proc_inst_start: String,
-    proc_inst_end: String,
-    tag_open_start: String,
-    tag_open_end: String,
-    tag_close_start: String,
-    tag_close_end: String,
-    tag_short_start: String,
-    tag_short_end: String,
-    attr_start: String,
-    attr_end: String,
-    comment_start: String,
-    comment_end: String,
-    cdata_start: String,
-    cdata_end: String,
-    text_start: String,
-    text_end: String,
-    indent: usize,
-    reg_entities: Regex,
-    reg_val_entities: Regex,
-    encode_entity: Option<Box<dyn Fn(char) -> String>>,
-    pretty: bool,
-    use_short_tags: bool,
-    eol: Eol,
-    final_newline: bool,
+    pub doctype_start: String,
+    pub doctype_end: String,
+    pub proc_inst_start: String,
+    pub proc_inst_end: String,
+    pub tag_open_start: String,
+    pub tag_open_end: String,
+    pub tag_close_start: String,
+    pub tag_close_end: String,
+    pub tag_short_start: String,
+    pub tag_short_end: String,
+    pub attr_start: String,
+    pub attr_end: String,
+    pub comment_start: String,
+    pub comment_end: String,
+    pub cdata_start: String,
+    pub cdata_end: String,
+    pub text_start: String,
+    pub text_end: String,
+    pub indent: usize,
+    pub reg_entities: Regex,
+    pub reg_val_entities: Regex,
+    pub encode_entity: Option<Box<dyn Fn(char) -> String>>,
+    pub pretty: bool,
+    pub use_short_tags: bool,
+    pub eol: Eol,
+    pub final_newline: bool,
 }
 
 impl Default for StringifyOptions {
@@ -97,31 +97,24 @@ pub struct Stringifier<'a> {
 }
 
 impl Stringifier<'_> {
-    pub fn new(user_options: StringifyOptions) -> Self {
+    pub fn new(mut user_options: StringifyOptions) -> Self {
         let eol = match user_options.eol {
             Eol::Crlf => "\r\n",
             Eol::Lf => "\n",
         };
 
-        let mut options: StringifyOptions = Default::default();
-
-        if options.pretty {
-            options.doctype_end = user_options.doctype_end + eol;
-            options.proc_inst_end = user_options.proc_inst_end + eol;
-            options.comment_end = user_options.comment_end + eol;
-            options.cdata_end = user_options.cdata_end + eol;
-            options.tag_short_end = user_options.tag_short_end + eol;
-            options.tag_open_end = user_options.tag_open_end + eol;
-            options.tag_close_end = user_options.tag_close_end + eol;
-            options.text_end = user_options.text_end + eol;
+        if user_options.pretty {
+            user_options.doctype_end = user_options.doctype_end + eol;
+            user_options.proc_inst_end = user_options.proc_inst_end + eol;
+            user_options.comment_end = user_options.comment_end + eol;
+            user_options.cdata_end = user_options.cdata_end + eol;
+            user_options.tag_short_end = user_options.tag_short_end + eol;
+            user_options.tag_open_end = user_options.tag_open_end + eol;
+            user_options.tag_close_end = user_options.tag_close_end + eol;
+            user_options.text_end = user_options.text_end + eol;
         }
 
-        let indent = if options.indent < 0 {
-            "\t".to_string()
-        } else {
-            " ".repeat(options.indent)
-        };
-
+        let indent = " ".repeat(user_options.indent);
         let ctx = Ctx {
             indent,
             indent_level: 0,
@@ -129,7 +122,7 @@ impl Stringifier<'_> {
         };
 
         Self {
-            options,
+            options: user_options,
             defaults: Default::default(),
             ctx,
             text_elems: get_text_elems(),
@@ -258,7 +251,14 @@ impl Stringifier<'_> {
         for attr in &n.attributes {
             if let Some(value) = &attr.value {
                 let encoded_value = if let Some(encode_entity) = &self.options.encode_entity {
-                    value.chars().map(encode_entity).collect()
+                    value.chars().map(|c| {
+                        let s = c.to_string();
+                        if Regex::is_match(&self.options.reg_val_entities, &s) {
+                            encode_entity(c)
+                        } else {
+                            s
+                        }
+                    }).collect()
                 } else {
                     value.to_string()
                 };
@@ -283,7 +283,14 @@ impl Stringifier<'_> {
         text.push_str(&self.options.text_start);
 
         let encoded_data = if let Some(encode_entity) = &self.options.encode_entity {
-            n.data.chars().map(encode_entity).collect()
+            n.data.chars().map(|c| {
+                let s = c.to_string();
+                if Regex::is_match(&self.options.reg_entities, &s) {
+                    encode_entity(c)
+                } else {
+                    s
+                }
+            }).collect()
         } else {
             n.data.to_string()
         };
@@ -339,7 +346,7 @@ impl Stringifier<'_> {
 }
 
 /// convert XAST to SVG string
-pub fn stringify_svg(doc: &Document) -> String {
-    let mut stringifier = Stringifier::new(Default::default());
+pub fn stringify_svg(doc: &Document, user_options: StringifyOptions) -> String {
+    let mut stringifier = Stringifier::new(user_options);
     stringifier.emit_document(doc)
 }

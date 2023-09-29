@@ -62,12 +62,12 @@ impl VisitMut for Visitor {
     fn visit_mut_element(&mut self, p: &mut Element) {
         p.visit_mut_children_with(self);
 
+        if p.tag_name.to_string() == "switch" {
+            return;
+        }
+
         p.children.iter_mut().for_each(|n| {
             if let Child::Element(n) = n {
-                if n.tag_name.to_string() == "svg" || n.tag_name.to_string() == "switch" {
-                    return;
-                }
-
                 // non-empty groups
                 if n.tag_name.to_string() != "g" || n.children.len() == 0 {
                     return;
@@ -83,23 +83,25 @@ impl VisitMut for Visitor {
                     let first_child = &mut n.children[0];
                     // TODO untangle this mess
                     if let Child::Element(first_child) = first_child {
-                        let mut first_child_attrs:HashSet::<String> = HashSet::new();
+                        let mut first_child_attrs: HashSet::<String> = HashSet::new();
                         first_child.attributes.iter().for_each(|attr: &Attribute| {
                             first_child_attrs.insert(attr.name.to_string());
                         });
 
-                        if first_child_attrs.get("id").is_none() &&
-                            n_attrs.get("filter").is_none() &&
-                            (n_attrs.get("class").is_none() ||
-                                first_child_attrs.get("class").is_none() &&
-                                ((n_attrs.get("clip-path").is_none() &&
-                                    n_attrs.get("mask").is_none()) ||
-                                    (first_child_attrs.get("g").is_some() &&
-                                    n_attrs.get("transform").is_none() &&
-                                    first_child_attrs.get("transform").is_none()))
+                        if !first_child_attrs.contains("id") &&
+                            !n_attrs.contains("filter") &&
+                            (!n_attrs.contains("class") ||
+                                !first_child_attrs.contains("class") &&
+                                ((!n_attrs.contains("clip-path") &&
+                                    !n_attrs.contains("mask")) ||
+                                    (first_child.tag_name.to_string() == "g" &&
+                                    !n_attrs.contains("transform") &&
+                                    !first_child_attrs.contains("transform")))
                             )
                         {
-                            for (index, attr) in n.attributes.clone().iter().enumerate() {
+                            let mut attributes = n.attributes.clone();
+                            attributes.reverse();
+                            for (index, attr) in attributes.iter().enumerate() {
                                 let name = attr.name.to_string();
                                 if let Some(value) = attr.value.clone() {
                                     // avoid copying to not conflict with animated attribute
@@ -107,7 +109,10 @@ impl VisitMut for Visitor {
                                         return;
                                     }
 
-                                    let first_child_attr = first_child.attributes.iter_mut().find(|attr| attr.name.to_string() == name);
+                                    let first_child_attr = first_child
+                                        .attributes
+                                        .iter_mut()
+                                        .find(|attr| attr.name.to_string() == name);
                                     match first_child_attr {
                                         None => {
                                             first_child.attributes.push(Attribute {
@@ -131,7 +136,7 @@ impl VisitMut for Visitor {
                                             }
                                         }
                                     }
-                                    n.attributes.remove(index);
+                                    n.attributes.remove(attributes.len() - index - 1);
                                 }
                             }
                         }

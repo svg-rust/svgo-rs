@@ -64,7 +64,7 @@ impl VisitMut for Visitor {
 
         p.children.iter_mut().for_each(|n| {
             if let Child::Element(n) = n {
-                if p.tag_name.to_string() == "svg" || p.tag_name.to_string() == "switch" {
+                if n.tag_name.to_string() == "svg" || n.tag_name.to_string() == "switch" {
                     return;
                 }
 
@@ -123,25 +123,9 @@ impl VisitMut for Visitor {
                                         Some(first_child_attr) => {
                                             if name == "transform" {
                                                 let new_value = format!("{} {}", value, first_child_attr.value.clone().unwrap_or("".into()).to_string());
-                                                first_child.attributes.push(Attribute {
-                                                    span: DUMMY_SP,
-                                                    namespace: None,
-                                                    prefix: None,
-                                                    name: name.into(),
-                                                    raw_name: None,
-                                                    value: Some(new_value.into()),
-                                                    raw_value: None,
-                                                });
+                                                first_child_attr.value = Some(new_value.into());
                                             } else if first_child_attr.value == Some("inherit".into()) {
-                                                first_child.attributes.push(Attribute {
-                                                    span: DUMMY_SP,
-                                                    namespace: None,
-                                                    prefix: None,
-                                                    name: name.into(),
-                                                    raw_name: None,
-                                                    value: Some(value),
-                                                    raw_value: None,
-                                                });
+                                                first_child_attr.value = Some(value);
                                             } else if !self.inheritable_attrs.contains(&name.to_string().as_str()) && first_child_attr.value != Some(value) {
                                                 return;
                                             }
@@ -156,7 +140,8 @@ impl VisitMut for Visitor {
             }
         });
 
-        p.children.clone().iter().enumerate().for_each(|(index, n)| {
+        let mut new_children = vec![];
+        p.children.clone().iter().for_each(|n| {
             if let Child::Element(n) = n {
                 // collapse groups without attributes
                 if n.attributes.len() == 0 {
@@ -170,10 +155,15 @@ impl VisitMut for Visitor {
                         }
                     }
                     // replace current node with all its children
-                    p.children.splice(index..index + 1, n.children.clone());
+                    for child in n.children.clone() {
+                        new_children.push(child);
+                    }
+                    return;
                 }
             }
+            new_children.push(n.clone());
         });
+        p.children = new_children;
     }
 }
 

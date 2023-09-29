@@ -44,7 +44,9 @@ impl Default for Visitor {
 
 impl Visitor {
     fn has_animated_attr(&mut self, n: &Element, name: &str) -> bool {
-        if self.elems_groups.get("animation").unwrap().contains(&n.tag_name.to_string().as_str()) && n.attributes.iter().any(|attr| attr.name.to_string() == name) {
+        if self.elems_groups.get("animation").unwrap().contains(&n.tag_name.to_string().as_str()) &&
+            n.attributes.iter().any(|attr| attr.name.to_string() == name)
+        {
             return true;
         }
         for child in n.children.iter() {
@@ -84,20 +86,22 @@ impl VisitMut for Visitor {
                     // TODO untangle this mess
                     if let Child::Element(first_child) = first_child {
                         let mut first_child_attrs: HashSet::<String> = HashSet::new();
-                        first_child.attributes.iter().for_each(|attr: &Attribute| {
-                            first_child_attrs.insert(attr.name.to_string());
-                        });
+                        first_child
+                            .attributes
+                            .iter().
+                            for_each(|attr: &Attribute| {
+                                first_child_attrs.insert(attr.name.to_string());
+                            });
 
                         if !first_child_attrs.contains("id") &&
                             !n_attrs.contains("filter") &&
                             (!n_attrs.contains("class") ||
-                                !first_child_attrs.contains("class") &&
-                                ((!n_attrs.contains("clip-path") &&
-                                    !n_attrs.contains("mask")) ||
-                                    (first_child.tag_name.to_string() == "g" &&
+                                !first_child_attrs.contains("class")) &&
+                            ((!n_attrs.contains("clip-path") &&
+                                !n_attrs.contains("mask")) ||
+                                (first_child.tag_name.to_string() == "g" &&
                                     !n_attrs.contains("transform") &&
                                     !first_child_attrs.contains("transform")))
-                            )
                         {
                             let mut attributes = n.attributes.clone();
                             attributes.reverse();

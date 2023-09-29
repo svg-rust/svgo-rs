@@ -23,7 +23,7 @@ fn get_absolute_lengths() -> HashMap<&'static str, f64> {
 pub fn round(number: f64, precision: i32) -> f64 {
     let scale: f64 = 10_f64.powi(precision);
     (number * scale).round() / scale
-  }
+}
 
 fn round_value(value: &str, float_precision: i32) -> String {
     let num = value.parse::<f64>().unwrap_or(0.0);

@@ -3,9 +3,9 @@ use std::{path::PathBuf, fs};
 use regex::Regex;
 use serde::de::DeserializeOwned;
 use swc_xml_ast::Document;
-use swc_xml_codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit};
 
 use crate::parser::parse_svg;
+use crate::stringifier;
 
 #[cfg(test)]
 use pretty_assertions::assert_eq;
@@ -33,16 +33,5 @@ pub fn test_plugin<F, P>(
     let mut doc = parse_svg(input.to_string()).unwrap();
 
     apply(&mut doc, &params);
-
-    let mut xml_str = String::new();
-    let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
-    let gen_conf = CodegenConfig {
-        minify: true,
-        ..Default::default()
-    };
-    let mut gen = CodeGenerator::new(wr, gen_conf);
-
-    gen.emit(&doc).unwrap();
-
-    assert_eq!(xml_str, expected);
+    assert_eq!(stringifier::stringify_svg(&doc), expected);
 }

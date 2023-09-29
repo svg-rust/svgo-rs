@@ -281,7 +281,13 @@ impl Stringifier<'_> {
 
         text.push_str(&self.create_indent());
         text.push_str(&self.options.text_start);
-        text.push_str(&n.data.to_string());
+
+        let encoded_data = if let Some(encode_entity) = &self.options.encode_entity {
+            n.data.chars().map(encode_entity).collect()
+        } else {
+            n.data.to_string()
+        };
+        text.push_str(&encoded_data);
 
         if self.ctx.text_context.is_none() {
             text.push_str(&self.options.text_end);
@@ -330,42 +336,6 @@ impl Stringifier<'_> {
         }
         indent
     }
-}
-
-fn normalize_attribute_value(value: &str) -> String {
-    if value.is_empty() {
-        return "\"\"".to_string();
-    }
-
-    let mut normalized = String::with_capacity(value.len() + 2);
-
-    normalized.push('"');
-    normalized.push_str(&escape_string(value, true));
-    normalized.push('"');
-
-    normalized
-}
-
-fn escape_string(value: &str, is_attribute_mode: bool) -> String {
-    let mut result = String::with_capacity(value.len());
-
-    for c in value.chars() {
-        match c {
-            '&' => {
-                result.push_str("&amp;");
-            }
-            '"' if is_attribute_mode => result.push_str("&quot;"),
-            '<' => {
-                result.push_str("&lt;");
-            }
-            '>' if !is_attribute_mode => {
-                result.push_str("&gt;");
-            }
-            _ => result.push(c),
-        }
-    }
-
-    result
 }
 
 /// convert XAST to SVG string

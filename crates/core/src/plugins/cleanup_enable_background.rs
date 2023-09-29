@@ -106,11 +106,8 @@ mod tests {
 
     use swc_core::common::{SourceMap, FileName};
     use swc_xml_parser::{parse_file_as_document, parser};
-    use swc_xml_codegen::{
-        writer::basic::{BasicXmlWriter, BasicXmlWriterConfig},
-        CodeGenerator, CodegenConfig, Emit,
-    };
 
+    use crate::stringifier;
     use super::*;
 
     fn code_test(input: &str, expected: &str) {
@@ -125,14 +122,7 @@ mod tests {
         ).unwrap();
 
         apply(&mut doc);
-
-        let mut xml_str = String::new();
-        let wr = BasicXmlWriter::new(&mut xml_str, None, BasicXmlWriterConfig::default());
-        let mut gen = CodeGenerator::new(wr, CodegenConfig::default());
-
-        gen.emit(&doc).unwrap();
-
-        assert_eq!(xml_str, expected);
+        assert_eq!(stringifier::stringify_svg(&doc), expected);
     }
 
     #[test]

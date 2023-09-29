@@ -64,11 +64,11 @@ pub fn apply(doc: &mut Document) {
 mod tests {
     use swc_core::common::{SourceMap, FileName};
     use swc_xml_parser::{parse_file_as_document, parser};
-    use crate::stringifier;
 
     #[cfg(test)]
     use pretty_assertions::assert_eq;
 
+    use crate::stringifier;
     use super::*;
 
     fn code_test(input: &str, expected: &str) {
@@ -108,7 +108,7 @@ b">
     test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
 </svg>"#,
             r#"<svg xmlns="http://www.w3.org/2000/svg" attr="a b">
-    test &amp; &lt;&amp; &gt; ' " &amp;
+    test &amp; &lt;&amp; &gt; &apos; &quot; &amp;
 </svg>"#,
         );
     }

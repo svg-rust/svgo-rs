@@ -4,13 +4,6 @@
 #[macro_use]
 extern crate napi_derive;
 
-use swc_xml_codegen::{
-    writer::basic::BasicXmlWriter,
-    CodeGenerator,
-    CodegenConfig,
-    Emit,
-};
-
 mod collections;
 mod parser;
 mod plugins;
@@ -39,17 +32,7 @@ pub fn optimize(input: String) -> Output {
     plugins::cleanup_ids::apply(&mut doc, &Default::default());
     plugins::cleanup_numeric_values::apply(&mut doc, &Default::default());
 
-    let mut xml_str = String::new();
-    let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
-    let gen_conf = CodegenConfig {
-        minify: true,
-        scripting_enabled: false,
-        ..Default::default()
-    };
-    let mut gen = CodeGenerator::new(wr, gen_conf);
-    gen.emit(&doc).unwrap();
-
     Output {
-        data: xml_str
+        data: stringifier::stringify_svg(&doc)
     }
 }

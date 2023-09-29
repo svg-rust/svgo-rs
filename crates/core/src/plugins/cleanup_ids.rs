@@ -350,11 +350,11 @@ mod tests {
 
     use swc_core::common::{SourceMap, FileName};
     use swc_xml_parser::{parse_file_as_document, parser};
-    use swc_xml_codegen::{writer::basic::BasicXmlWriter, CodeGenerator, CodegenConfig, Emit};
 
     #[cfg(test)]
     use pretty_assertions::assert_eq;
 
+    use crate::stringifier;
     use super::*;
 
     fn code_test(input: &str, expected: &str, params: &Params) {
@@ -369,19 +369,7 @@ mod tests {
         ).unwrap();
 
         apply(&mut doc, &params);
-
-        let mut xml_str = String::new();
-        let wr = BasicXmlWriter::new(&mut xml_str, None, Default::default());
-        let gen_conf = CodegenConfig {
-            minify: true,
-            scripting_enabled: false,
-            ..Default::default()
-        };
-        let mut gen = CodeGenerator::new(wr, gen_conf);
-
-        gen.emit(&doc).unwrap();
-
-        assert_eq!(xml_str, expected);
+        assert_eq!(stringifier::stringify_svg(&doc), expected);
     }
 
     fn document_test(input: PathBuf) {

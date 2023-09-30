@@ -4,3 +4,4 @@ pub mod cleanup_ids;
 pub mod cleanup_numeric_values;
 pub mod collapse_groups;
 pub mod convert_colors;
+pub mod convert_ellipse_to_circle;
